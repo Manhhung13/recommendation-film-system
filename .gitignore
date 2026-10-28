@@ -1,0 +1,41 @@
+# Downloaded datasets, crawl checkpoints, and generated reports
+/dataset_linkage_work/
+/data/
+/datasets/
+
+# Local Python environments (including backup/broken environments)
+.venv*/
+venv/
+env/
+ENV/
+.conda/
+
+# Credentials and local environment configuration
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local logs and editor/OS files
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
