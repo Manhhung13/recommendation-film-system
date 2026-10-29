@@ -1,0 +1,39 @@
+id: HYBRID-002
+title: Weighted ranker and MMR re-rank
+type: ml
+source_slides:
+- 9
+status: PLANNED
+dependencies:
+- HYBRID-001
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/recommender/hybrid/
+- tests/recommender/
+acceptance_criteria:
+- id: HYBRID-002-AC-01
+  description: Normalize and combine candidate scores with documented weights
+  planned_test: tests/recommender/test_hybrid_002.py
+  test_case: test_hybrid_002_ac_01
+- id: HYBRID-002-AC-02
+  description: Re-rank for diversity novelty freshness and MMR
+  planned_test: tests/recommender/test_hybrid_002.py
+  test_case: test_hybrid_002_ac_02
+- id: HYBRID-002-AC-03
+  description: Return at most K eligible unique films in ranked order
+  planned_test: tests/recommender/test_hybrid_002.py
+  test_case: test_hybrid_002_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- ml_evaluation
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[HYBRID-002]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

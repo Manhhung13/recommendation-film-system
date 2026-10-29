@@ -1,0 +1,44 @@
+id: SDLC-INTEGRATION-001
+title: Integrate MovieRec Agent SDLC kit
+type: infra
+source_slides:
+- 2
+- 10
+- 11
+status: PLANNED
+dependencies: []
+description: Integrate the existing reference kit into repository-root operation without changing data pipeline behavior.
+allowed_paths:
+- AGENTS.md
+- .gitignore
+- .github/
+- docs/
+- movie-rec-agent-starter/
+- tests/
+acceptance_criteria:
+- id: SDLC-INTEGRATION-001-AC-01
+  description: Task registry and dependency graph validate from repository root
+  planned_test: tests/harness/test_integration_001.py
+  test_case: test_sdlc_integration_001_registry_from_root
+- id: SDLC-INTEGRATION-001-AC-02
+  description: Root workflow runs contract, harness, and repository integration checks
+  planned_test: tests/harness/test_integration_001.py
+  test_case: test_sdlc_integration_001_workflow_runs_harness
+- id: SDLC-INTEGRATION-001-AC-03
+  description: Git preflight enforces exact files and directory prefixes
+  planned_test: tests/harness/test_integration_001.py
+  test_case: test_sdlc_integration_001_allowlist_paths
+required_checks:
+- unit_tests
+- integration_tests
+- independent_review
+- github_ci
+policy_notes:
+- Do not change the data acquisition or validation pipeline.
+- Agent roles, tool contracts and declarative workflows require compatible runtime enforcement.
+- Remote CI must match the pushed commit SHA before VERIFIED.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[SDLC-INTEGRATION-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

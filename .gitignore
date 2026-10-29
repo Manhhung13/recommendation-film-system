@@ -26,6 +26,7 @@ __pycache__/
 .coverage.*
 htmlcov/
 .ipynb_checkpoints/
+.runtime/
 
 # Python build artifacts
 build/

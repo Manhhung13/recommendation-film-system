@@ -1,0 +1,11 @@
+id: github-ci-reader
+kind: project_tool_contract
+description: Query check-runs for immutable commit SHA
+commands_examples:
+- python movie-rec-agent-starter/scripts/github_ci.py --repo OWNER/REPO --sha COMMIT_SHA --required validate-contracts
+- python movie-rec-agent-starter/scripts/github_ci.py --repo OWNER/REPO --sha COMMIT_SHA --required test
+check_name_policy: validate-contracts is the agent contract/harness workflow job; test is reserved for product CI.
+security: Needs GITHUB_TOKEN with read access; does not set task status automatically.
+runtime_status: reference_only
+caller: authorized_runtime_or_human
+note: Không phải executable MCP tool; cần tool gateway/runner.

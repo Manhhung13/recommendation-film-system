@@ -1,0 +1,216 @@
+version: 1
+source: 11-slide MovieRec presentation
+tasks:
+- id: SDLC-INTEGRATION-001
+  file: SDLC-INTEGRATION-001.yaml
+  dependencies: []
+  slides:
+  - 2
+  - 10
+  - 11
+  type: infra
+- id: SETUP-001
+  file: SETUP-001.yaml
+  dependencies:
+  - SDLC-INTEGRATION-001
+  slides:
+  - 2
+  - 10
+  - 11
+  type: infra
+- id: DATA-001
+  file: DATA-001.yaml
+  dependencies:
+  - SETUP-001
+  slides:
+  - 3
+  - 4
+  - 5
+  type: data
+- id: DATA-002
+  file: DATA-002.yaml
+  dependencies:
+  - DATA-001
+  slides:
+  - 6
+  type: data
+- id: DATA-003
+  file: DATA-003.yaml
+  dependencies:
+  - DATA-001
+  slides:
+  - 3
+  - 4
+  - 6
+  type: data
+- id: DATA-004
+  file: DATA-004.yaml
+  dependencies:
+  - DATA-002
+  slides:
+  - 3
+  - 4
+  - 6
+  type: data
+- id: DATA-005
+  file: DATA-005.yaml
+  dependencies:
+  - DATA-002
+  slides:
+  - 3
+  - 4
+  - 6
+  type: data
+- id: DATA-006
+  file: DATA-006.yaml
+  dependencies:
+  - DATA-003
+  - DATA-004
+  - DATA-005
+  slides:
+  - 6
+  type: data
+- id: SPLIT-001
+  file: SPLIT-001.yaml
+  dependencies:
+  - DATA-006
+  slides:
+  - 2
+  - 5
+  - 11
+  type: ml
+- id: BASE-001
+  file: BASE-001.yaml
+  dependencies:
+  - SPLIT-001
+  slides:
+  - 7
+  type: ml
+- id: CF-001
+  file: CF-001.yaml
+  dependencies:
+  - SPLIT-001
+  slides:
+  - 5
+  - 7
+  type: ml
+- id: CF-002
+  file: CF-002.yaml
+  dependencies:
+  - SPLIT-001
+  slides:
+  - 5
+  - 7
+  type: ml
+- id: MF-001
+  file: MF-001.yaml
+  dependencies:
+  - SPLIT-001
+  slides:
+  - 5
+  - 7
+  type: ml
+- id: CONTENT-001
+  file: CONTENT-001.yaml
+  dependencies:
+  - DATA-006
+  - SPLIT-001
+  slides:
+  - 5
+  - 8
+  type: ml
+- id: KNOW-001
+  file: KNOW-001.yaml
+  dependencies:
+  - DATA-006
+  slides:
+  - 5
+  - 8
+  type: ml
+- id: SEQ-001
+  file: SEQ-001.yaml
+  dependencies:
+  - SPLIT-001
+  slides:
+  - 5
+  - 8
+  type: ml
+- id: HYBRID-001
+  file: HYBRID-001.yaml
+  dependencies:
+  - MF-001
+  - CONTENT-001
+  - KNOW-001
+  - BASE-001
+  slides:
+  - 9
+  type: ml
+- id: HYBRID-002
+  file: HYBRID-002.yaml
+  dependencies:
+  - HYBRID-001
+  slides:
+  - 9
+  type: ml
+- id: EVAL-001
+  file: EVAL-001.yaml
+  dependencies:
+  - HYBRID-002
+  - CF-001
+  - CF-002
+  slides:
+  - 11
+  type: ml
+- id: API-001
+  file: API-001.yaml
+  dependencies:
+  - HYBRID-002
+  slides:
+  - 2
+  - 10
+  type: api
+- id: API-002
+  file: API-002.yaml
+  dependencies:
+  - API-001
+  slides:
+  - 2
+  - 10
+  type: api
+- id: UI-001
+  file: UI-001.yaml
+  dependencies:
+  - API-001
+  - API-002
+  slides:
+  - 10
+  type: api
+- id: OPS-001
+  file: OPS-001.yaml
+  dependencies:
+  - API-001
+  slides:
+  - 10
+  - 11
+  type: ops
+- id: OPS-002
+  file: OPS-002.yaml
+  dependencies:
+  - API-001
+  slides:
+  - 10
+  - 11
+  type: ops
+- id: E2E-001
+  file: E2E-001.yaml
+  dependencies:
+  - EVAL-001
+  - UI-001
+  - OPS-001
+  - OPS-002
+  slides:
+  - 2
+  - 9
+  - 10
+  - 11
+  type: api

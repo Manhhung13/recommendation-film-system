@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: MovieRec API (proposed contract, not an implemented service)
+  version: 0.1.0
+paths:
+  /recommend:
+    get:
+      summary: Personalized Top-K recommendations (slide 10)
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema: {type: string}
+        - in: query
+          name: k
+          required: false
+          schema: {type: integer, minimum: 1, maximum: 100, default: 10}
+      responses:
+        '200':
+          description: Ranked eligible recommendation items
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user_id, recommendations]
+                properties:
+                  user_id: {type: string}
+                  recommendations:
+                    type: array
+                    items:
+                      type: object
+                      required: [movie_id, score]
+                      properties:
+                        movie_id: {type: integer}
+                        score: {type: number}
+        '400': {description: Invalid request}
+  /similar:
+    get:
+      summary: Similar movies (slide 10)
+      parameters:
+        - in: query
+          name: movie_id
+          required: true
+          schema: {type: integer}
+      responses:
+        '200': {description: Similar movies ranked list; schema to finalize}
+  /feedback:
+    post:
+      summary: Persist user feedback (slide 10)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, movie_id, event_type]
+              properties:
+                user_id: {type: string}
+                movie_id: {type: integer}
+                event_type: {type: string, enum: [rating, like, dislike, clicked]}
+                rating: {type: number, nullable: true}
+      responses:
+        '202': {description: Feedback accepted}

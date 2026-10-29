@@ -1,0 +1,9 @@
+id: ml-evaluator
+kind: project_tool_contract
+description: Run baseline and temporal-split model metrics
+commands_examples:
+- pytest -q tests/recommender
+security: Metrics produced by executable evaluation, not agent claims; avoid future leakage.
+runtime_status: reference_only
+caller: authorized_runtime_or_human
+note: Không phải executable MCP tool; cần tool gateway/runner.

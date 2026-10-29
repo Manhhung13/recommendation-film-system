@@ -1,0 +1,21 @@
+{
+  "task_id": "EVAL-001",
+  "status": "NOT_EVALUATED",
+  "dataset_version": null,
+  "split_policy": null,
+  "baseline": null,
+  "metrics": {
+    "rmse": null,
+    "mae": null,
+    "precision_at_k": null,
+    "recall_at_k": null,
+    "ndcg_at_k": null,
+    "coverage": null,
+    "diversity": null,
+    "novelty": null
+  },
+  "leakage_checks": null,
+  "test_command": null,
+  "exit_code": null,
+  "git_sha": null
+}

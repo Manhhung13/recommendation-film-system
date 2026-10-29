@@ -1,0 +1,45 @@
+id: EVAL-001
+title: Offline model evaluation and benchmark report
+type: ml
+source_slides:
+- 11
+status: PLANNED
+dependencies:
+- HYBRID-002
+- CF-001
+- CF-002
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/recommender/evaluation/
+- tests/recommender/
+- reports/
+acceptance_criteria:
+- id: EVAL-001-AC-01
+  description: Compute ranking metrics P@K R@K NDCG@K and compare baseline
+  planned_test: tests/recommender/test_eval_001.py
+  test_case: test_eval_001_ac_01
+- id: EVAL-001-AC-02
+  description: Compute coverage diversity novelty and rating RMSE/MAE as applicable
+  planned_test: tests/recommender/test_eval_001.py
+  test_case: test_eval_001_ac_02
+- id: EVAL-001-AC-03
+  description: Publish reproducible split/model versions and leakage checks
+  planned_test: tests/recommender/test_eval_001.py
+  test_case: test_eval_001_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- ml_evaluation
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[EVAL-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true
+blocked_on_decision:
+- D-04
+- D-05

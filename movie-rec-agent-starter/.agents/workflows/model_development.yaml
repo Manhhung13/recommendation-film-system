@@ -1,0 +1,20 @@
+id: model-development
+task_chain:
+- BASE-001
+- CF-001
+- CF-002
+- MF-001
+- CONTENT-001
+- KNOW-001
+- SEQ-001
+- HYBRID-001
+- HYBRID-002
+- EVAL-001
+notes:
+- Some baseline tasks may be parallel after SPLIT-001
+- SEQ-001 is advanced; require explicit decision before starting
+gates:
+- train/test isolation
+- model baseline metrics
+- Top-K filter and dedup
+- reproducibility

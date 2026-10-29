@@ -1,0 +1,41 @@
+id: DATA-001
+title: Load MovieLens 25M raw tables
+type: data
+source_slides:
+- 3
+- 4
+- 5
+status: PLANNED
+dependencies:
+- SETUP-001
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/recommender/data/
+- tests/data/
+acceptance_criteria:
+- id: DATA-001-AC-01
+  description: Parse ratings/movies/tags/links with required types
+  planned_test: tests/data/test_data_001.py
+  test_case: test_data_001_ac_01
+- id: DATA-001-AC-02
+  description: Preserve raw sources and unique row provenance
+  planned_test: tests/data/test_data_001.py
+  test_case: test_data_001_ac_02
+- id: DATA-001-AC-03
+  description: Reject malformed ratings or timestamps deterministically
+  planned_test: tests/data/test_data_001.py
+  test_case: test_data_001_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- data_validation
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[DATA-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

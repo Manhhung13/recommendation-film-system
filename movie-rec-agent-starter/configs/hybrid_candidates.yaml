@@ -1,0 +1,11 @@
+# Candidate quotas copied from slide 9; initial proposal, not benchmark optimum.
+svd: 100
+content: 100
+knowledge: 50
+popular: 30
+candidate_union: unique_by_movie_id
+eligibility_filter: requires_decision_D-01
+expected_pool: "slide suggests ~200-300, not guaranteed after dedup/exclusion"
+ranking: weighted_score
+reranking: [diversity, novelty, freshness, mmr]
+output_k_default_demo: 10

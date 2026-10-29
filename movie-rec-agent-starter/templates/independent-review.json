@@ -1,0 +1,10 @@
+{
+  "task_id": null,
+  "reviewer_identity": null,
+  "reviewer_is_different_from_author": null,
+  "commit_or_diff_digest": null,
+  "decision": "NOT_REVIEWED",
+  "blocking_findings": [],
+  "evidence": [],
+  "notes": "Example shape only. Production approval must come from a trusted reviewer identity and be bound to immutable code digest."
+}

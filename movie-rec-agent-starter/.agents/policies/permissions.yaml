@@ -1,0 +1,64 @@
+version: 1
+notice: Reference policies; MUST be enforced by sandbox/runner, not prompt alone.
+roles:
+  business-analyst:
+    repo_read: true
+    write_paths:
+    - docs/business/
+    git_push: false
+    can_approve: false
+  architect:
+    repo_read: true
+    write_paths:
+    - docs/architecture/
+    - contracts/
+    git_push: false
+    can_approve: false
+  planner:
+    repo_read: true
+    write_paths:
+    - tasks/
+    - PLANS.md
+    git_push: false
+    can_approve: false
+  developer:
+    repo_read: true
+    write_paths: task.allowed_paths_only
+    git_push: false
+    can_approve: false
+  qa-verifier:
+    repo_read: true
+    write_paths:
+    - .runtime/evidence/
+    git_push: false
+    can_approve: false
+  ml-evaluator:
+    repo_read: true
+    write_paths:
+    - .runtime/evidence/
+    git_push: false
+    can_approve: false
+  code-reviewer:
+    repo_read: true
+    write_paths:
+    - .runtime/reviews/
+    git_push: false
+    can_approve: true
+  git-controller:
+    repo_read: true
+    write_paths: []
+    git_push: true
+    can_approve: false
+  orchestrator:
+    repo_read: true
+    write_paths:
+    - .runtime/
+    git_push: false
+    can_approve: false
+blocked_operations:
+- git push --force
+- direct push to main
+- write secrets
+- remove tests to pass
+- disable required checks
+- update production data without approval

@@ -1,0 +1,40 @@
+id: OPS-001
+title: Caching and vector index optimization
+type: ops
+source_slides:
+- 10
+- 11
+status: PLANNED
+dependencies:
+- API-001
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/backend/
+- src/recommender/serving/
+- tests/ops/
+acceptance_criteria:
+- id: OPS-001-AC-01
+  description: Cache keys isolate user, model and filter versions
+  planned_test: tests/ops/test_ops_001.py
+  test_case: test_ops_001_ac_01
+- id: OPS-001-AC-02
+  description: Fallback works if Redis or FAISS unavailable
+  planned_test: tests/ops/test_ops_001.py
+  test_case: test_ops_001_ac_02
+- id: OPS-001-AC-03
+  description: Benchmark latency and cache-hit without fabricated thresholds
+  planned_test: tests/ops/test_ops_001.py
+  test_case: test_ops_001_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[OPS-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

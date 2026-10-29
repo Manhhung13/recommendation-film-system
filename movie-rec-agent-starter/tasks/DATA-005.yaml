@@ -1,0 +1,43 @@
+id: DATA-005
+title: Enrich IMDb movie metadata
+type: data
+source_slides:
+- 3
+- 4
+- 6
+status: PLANNED
+dependencies:
+- DATA-002
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/recommender/data/
+- tests/data/
+acceptance_criteria:
+- id: DATA-005-AC-01
+  description: Ingest director actor writer runtime year fields
+  planned_test: tests/data/test_data_005.py
+  test_case: test_data_005_ac_01
+- id: DATA-005-AC-02
+  description: Preserve IMDb ID mapping and provenance
+  planned_test: tests/data/test_data_005.py
+  test_case: test_data_005_ac_02
+- id: DATA-005-AC-03
+  description: Handle null runtime and missing cast safely
+  planned_test: tests/data/test_data_005.py
+  test_case: test_data_005_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- data_validation
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[DATA-005]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true
+blocked_on_decision:
+- D-08

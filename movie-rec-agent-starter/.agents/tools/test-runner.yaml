@@ -1,0 +1,9 @@
+id: test-runner
+kind: project_tool_contract
+description: Execute real local checks with command exit codes
+commands_examples:
+- python movie-rec-agent-starter/scripts/agentctl.py run-local TASK-ID
+security: No arbitrary shell from untrusted YAML; test paths from task, pytest invocation is subprocess list.
+runtime_status: reference_only
+caller: authorized_runtime_or_human
+note: Không phải executable MCP tool; cần tool gateway/runner.

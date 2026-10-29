@@ -1,0 +1,10 @@
+# Metric categories from slide 11; thresholds intentionally not invented.
+split_strategy: temporal
+relevance_definition: requires_decision_D-04
+metrics:
+  rating_prediction: [rmse, mae]
+  ranking: [precision_at_k, recall_at_k, ndcg_at_k]
+  experience: [coverage, diversity, novelty]
+  system: [latency, cache_hit_rate]
+baseline_to_beat: requires_experiment
+minimum_acceptable_metrics: requires_decision_D-05

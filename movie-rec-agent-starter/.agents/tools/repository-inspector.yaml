@@ -1,0 +1,11 @@
+id: repository-inspector
+kind: project_tool_contract
+description: Inspect git, source, ADR and test inventory
+commands_examples:
+- git status --short
+- git diff --stat
+- git log --oneline -10
+security: Read-only; repo paths not secrets.
+runtime_status: reference_only
+caller: authorized_runtime_or_human
+note: Không phải executable MCP tool; cần tool gateway/runner.

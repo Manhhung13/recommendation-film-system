@@ -1,6 +1,6 @@
 # Repository instructions — Movie Recommendation System
 
-These instructions apply at the Git repository root. The reference SDLC lives in `movie-rec-agent-starter/`; read its `AGENTS.md`, `PLANS.md`, relevant `tasks/<TASK-ID>.yaml`, business decisions, and quality gates before product work. The starter is a reference until integrated; its prompts and YAML do not themselves enforce CI or permissions. Explicit user instructions and approved business decisions take precedence over proposed defaults.
+These instructions apply at the Git repository root. The MovieRec SDLC kit is integrated and remains organized under `movie-rec-agent-starter/`; its CLI commands run from the root and its active contract workflow is `.github/workflows/agent-contracts.yml`. Read the kit's `AGENTS.md`, `PLANS.md`, relevant `tasks/<TASK-ID>.yaml`, business decisions, and quality gates before product work. Its role prompts and YAML contracts do not themselves provide native agents, tool permissions, independent review, or trusted CI enforcement. Explicit user instructions and approved business decisions take precedence over proposed defaults.
 
 ## Mandatory: auto commit and push after each changed-file task
 

@@ -1,0 +1,41 @@
+id: UI-001
+title: Demo UI for movie browsing and recommendations
+type: api
+source_slides:
+- 10
+status: PLANNED
+dependencies:
+- API-001
+- API-002
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/frontend/
+- tests/e2e/
+acceptance_criteria:
+- id: UI-001-AC-01
+  description: Show user Top-K and movie metadata
+  planned_test: tests/api/test_ui_001.py
+  test_case: test_ui_001_ac_01
+- id: UI-001-AC-02
+  description: Support feedback user path and meaningful empty states
+  planned_test: tests/api/test_ui_001.py
+  test_case: test_ui_001_ac_02
+- id: UI-001-AC-03
+  description: UI choice Streamlit/React documented via decision D-02
+  planned_test: tests/api/test_ui_001.py
+  test_case: test_ui_001_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[UI-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true
+blocked_on_decision:
+- D-02

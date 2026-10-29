@@ -1,0 +1,43 @@
+id: SPLIT-001
+title: Build time-aware train validation test split
+type: ml
+source_slides:
+- 2
+- 5
+- 11
+status: PLANNED
+dependencies:
+- DATA-006
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/recommender/evaluation/
+- tests/recommender/
+acceptance_criteria:
+- id: SPLIT-001-AC-01
+  description: Split observed ratings by timestamp with documented policy
+  planned_test: tests/recommender/test_split_001.py
+  test_case: test_split_001_ac_01
+- id: SPLIT-001-AC-02
+  description: Prevent future interactions leaking into train features
+  planned_test: tests/recommender/test_split_001.py
+  test_case: test_split_001_ac_02
+- id: SPLIT-001-AC-03
+  description: Validate sparse users and reproducible split seeds
+  planned_test: tests/recommender/test_split_001.py
+  test_case: test_split_001_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- ml_evaluation
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[SPLIT-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true
+blocked_on_decision:
+- D-03

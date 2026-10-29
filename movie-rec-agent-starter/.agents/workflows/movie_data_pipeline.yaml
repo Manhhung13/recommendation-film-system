@@ -1,0 +1,18 @@
+id: movie-data
+task_chain:
+- DATA-001
+- DATA-002
+- DATA-003
+- DATA-004
+- DATA-005
+- DATA-006
+- SPLIT-001
+invariants:
+- raw data provenance
+- movieId mapping via links.csv
+- do not join user ids
+- no temporal leakage
+gates:
+- schema validation
+- link integrity
+- split audit

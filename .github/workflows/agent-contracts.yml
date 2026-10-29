@@ -1,0 +1,21 @@
+name: agent-contracts
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r movie-rec-agent-starter/requirements-agent.txt
+      - run: python -B movie-rec-agent-starter/scripts/agentctl.py validate
+      - run: python -B -m unittest discover -s movie-rec-agent-starter/tests/harness -v
+      - run: python -B -m pytest -q tests/harness/test_integration_001.py
+      # This validates SDLC contracts and the harness only; it does not certify product tasks.

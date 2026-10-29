@@ -1,0 +1,40 @@
+id: API-001
+title: FastAPI recommend and similar endpoints
+type: api
+source_slides:
+- 2
+- 10
+status: PLANNED
+dependencies:
+- HYBRID-002
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/backend/
+- tests/api/
+- contracts/
+acceptance_criteria:
+- id: API-001-AC-01
+  description: GET recommendation returns schema-valid unique Top-K
+  planned_test: tests/api/test_api_001.py
+  test_case: test_api_001_ac_01
+- id: API-001-AC-02
+  description: Similar-movie endpoint obeys eligibility and missing movie handling
+  planned_test: tests/api/test_api_001.py
+  test_case: test_api_001_ac_02
+- id: API-001-AC-03
+  description: Validate K range and nonexistent users/items
+  planned_test: tests/api/test_api_001.py
+  test_case: test_api_001_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[API-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

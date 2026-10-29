@@ -1,0 +1,11 @@
+id: git-publisher
+kind: project_tool_contract
+description: Commit on safe feature branch after local gate and review
+commands_examples:
+- git add <explicit paths>
+- 'git commit -m "feat(scope): task [TASK-ID]"'
+- git push origin feature/name
+security: Separate permission boundary; never force push; this YAML does not implement git permissions.
+runtime_status: reference_only
+caller: authorized_runtime_or_human
+note: Không phải executable MCP tool; cần tool gateway/runner.

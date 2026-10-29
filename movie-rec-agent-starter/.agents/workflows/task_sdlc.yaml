@@ -1,0 +1,49 @@
+id: task-sdlc
+description: Reference declarative state workflow; not executable without runner.
+states:
+- PLANNED
+- READY
+- RUNNING
+- LOCAL_VERIFIED
+- REVIEW_APPROVED
+- COMMITTED
+- CI_PENDING
+- VERIFIED
+- NEEDS_REWORK
+- BLOCKED
+transitions:
+- from: PLANNED
+  to: READY
+  when: all_dependencies_verified_and_decisions_approved
+- from: READY
+  to: RUNNING
+  when: task_lease_granted
+- from: RUNNING
+  to: LOCAL_VERIFIED
+  when: required_tests_exit_zero_and_evidence_exists
+- from: LOCAL_VERIFIED
+  to: REVIEW_APPROVED
+  when: independent_review_approved
+- from: REVIEW_APPROVED
+  to: COMMITTED
+  when: git_commit_created_in_allowed_branch
+- from: COMMITTED
+  to: CI_PENDING
+  when: push_done_and_head_sha_recorded
+- from: CI_PENDING
+  to: VERIFIED
+  when: github_required_checks_pass_exact_sha
+- from: RUNNING
+  to: NEEDS_REWORK
+  when: local_test_failure
+- from: LOCAL_VERIFIED
+  to: NEEDS_REWORK
+  when: review_rejected
+- from: CI_PENDING
+  to: NEEDS_REWORK
+  when: github_ci_failed
+- from: NEEDS_REWORK
+  to: BLOCKED
+  when: retry_limit_reached
+state_store: PostgreSQL for production; .runtime/state.json demo only
+no_auto_merge_to_main: true

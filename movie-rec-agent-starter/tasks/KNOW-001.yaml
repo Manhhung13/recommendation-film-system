@@ -1,0 +1,40 @@
+id: KNOW-001
+title: Knowledge-based metadata filters
+type: ml
+source_slides:
+- 5
+- 8
+status: PLANNED
+dependencies:
+- DATA-006
+description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+allowed_paths:
+- src/recommender/models/
+- tests/recommender/
+acceptance_criteria:
+- id: KNOW-001-AC-01
+  description: Apply year/runtime/genre/actor/director filters
+  planned_test: tests/recommender/test_know_001.py
+  test_case: test_know_001_ac_01
+- id: KNOW-001-AC-02
+  description: Never return films breaking required constraints
+  planned_test: tests/recommender/test_know_001.py
+  test_case: test_know_001_ac_02
+- id: KNOW-001-AC-03
+  description: Explain recommendation only with actual movie metadata
+  planned_test: tests/recommender/test_know_001.py
+  test_case: test_know_001_ac_03
+required_checks:
+- unit_tests
+- integration_tests
+- ml_evaluation
+- independent_review
+- github_ci
+policy_notes:
+- Do not assert acceptance without running actual tests.
+- Remote CI must match pushed commit SHA.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[KNOW-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

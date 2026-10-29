@@ -1,0 +1,18 @@
+id: RECO-NEW
+status: PLANNED
+title: Task title
+type: ml
+source_slides: [9, 11]
+dependencies: []
+allowed_paths: [src/recommender/, tests/recommender/]
+acceptance_criteria:
+  - id: RECO-NEW-AC-01
+    description: Describe business observable condition
+    planned_test: tests/recommender/test_reco_new.py
+required_checks: [unit_tests, independent_review, github_ci]
+blocked_on_decision: []
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[RECO-NEW]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

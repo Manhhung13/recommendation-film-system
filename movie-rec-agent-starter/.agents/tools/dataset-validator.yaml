@@ -1,0 +1,9 @@
+id: dataset-validator
+kind: project_tool_contract
+description: Validate MovieLens++ source schema and mapping
+commands_examples:
+- pytest -q tests/data
+security: Never download datasets automatically; honor license and raw source immutability.
+runtime_status: reference_only
+caller: authorized_runtime_or_human
+note: Không phải executable MCP tool; cần tool gateway/runner.
