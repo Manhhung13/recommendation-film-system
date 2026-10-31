@@ -97,6 +97,9 @@ def assert_ready(tasks,tid,state,approvals=(),root=ROOT):
         approved=verify_readiness(tasks,tid,root)
     if not all(status(dep,state)=='VERIFIED' for dep in tasks[tid].get('dependencies',[])):
         raise ValueError('Task blocked by dependencies')
+    if tid == 'SETUP-001':
+        from bootstrap import verify_checkpoint
+        verify_checkpoint(root)
     if not all(d in approved for d in tasks[tid].get('blocked_on_decision',[])):
         raise ValueError('Task blocked by open business decisions')
 
@@ -125,7 +128,7 @@ def local_tests_for_task(task,root=ROOT):
 def run_local(task,root=ROOT):
     # This direct Python entrypoint is guarded as well as the CLI. Re-check on
     # resume: an old RUNNING state must not authorize changed data/evidence.
-    if task['id'] in PROTECTED_TASKS:
+    if task['id'] in PROTECTED_TASKS or task['id'] == 'SETUP-001':
         tasks=load_tasks(root)
         assert_ready(tasks,task['id'],read_state(root),root=root)
         if task != tasks[task['id']]:
