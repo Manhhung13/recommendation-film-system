@@ -1,0 +1,108 @@
+version: 1
+status: PLANNING_DRAFT
+execution_task: EDA-001
+global_rules:
+  history_filter: event_timestamp < T
+  availability_filter: verified_available_at < T for HISTORICAL_STRICT; otherwise exclude and flag
+  fit_scope: Priors, vocabularies, normalization, popularity and transforms use training history only.
+  missing_rule: Missing observations are unknown; emit coverage and support masks, never infer negative feedback.
+  shrinkage: Lambda/alpha/half-life/cohort boundaries are proposed hyperparameters chosen on development/validation after approvals, never final test.
+features:
+  - id: rating_bias
+    hypotheses: [H01, H02, H08, H11]
+    sources: [ratings.csv]
+    formula: 'b_u=sum_{t<T}(r_ui-mu_T)/(n_u+lambda); optional train-only item bias correction'
+    availability: rating_event_timestamp<T
+    missing: Zero history returns train prior with missing_personal flag; constant ratings have undefined personal variance.
+    shrinkage: Shrink to train global bias; epsilon protects optional scale normalization without inventing variance.
+  - id: genre_affinity
+    hypotheses: [H02, H05]
+    sources: [ratings.csv, movies.csv]
+    formula: 'A_u(g)=sum(w*x_ig*e_ui)/(lambda+sum(w*x_ig)); x_ig=1/known_genre_count'
+    availability: rating_event_timestamp<T and genre_snapshot_available_at<T
+    missing: No genres listed is missing metadata; unobserved genre affinity remains unsupported with mask.
+    shrinkage: Toward train genre prior; report weighted support.
+  - id: semantic_affinity
+    hypotheses: [H03, H06]
+    sources: [tags.csv, genome-scores.csv, genome-tags.csv, TMDb_overview_keywords]
+    formula: 's_u=sum(w*e_ui*v_i)/(lambda+sum(w*has_vector_i)); fit vocabulary/IDF only on training data'
+    availability: Tag event and vocabulary/snapshot availability<T; full-snapshot Genome otherwise enriched-only.
+    missing: No vector or zero norm returns missing score and source coverage, not cosine zero.
+    shrinkage: To train semantic prior; supported dimensions only.
+  - id: attribute_affinity
+    hypotheses: [H04, H05]
+    sources: [TMDb_details_credits, IMDb_basics_crew_principals_names]
+    formula: 'A_u(a)=sum(w*x_ia*e_ui)/(lambda+sum(w*x_ia)); normalize multi-valued attributes'
+    availability: attribute_source_available_at<T and interaction_timestamp<T
+    missing: Unknown runtime/language/cast/director stays missing; retain conflicting sources separately.
+    shrinkage: Attribute/frequency-aware prior for sparse creators; no unsupported actor preference.
+  - id: movie_age_preference
+    hypotheses: [H04, H06, H12]
+    sources: [ratings.csv, release_intervals]
+    formula: 'age_at_event=rating_date-release_date; weighted mean and decade histogram over t<T'
+    availability: release_upper<T and verified_release_evidence_available_at<T
+    missing: Year-only yields age interval; unknown/conflicting release excludes strict computation and reports reason.
+    shrinkage: Weighted train movie-age prior with effective sample size.
+  - id: limited_interactions
+    hypotheses: [H05]
+    sources: [genre_affinity, attribute_affinity]
+    formula: 'joint_residual - genre_marginal - attribute_marginal + train_mean, pre-registered crosses only'
+    availability: Every component and supporting event<T
+    missing: Unsupported cells omitted with support flags; no global Cartesian expansion.
+    shrinkage: Joint-cell n/(n+lambda); stronger regularization than marginals.
+  - id: recency_activity
+    hypotheses: [H06, H07]
+    sources: [ratings.csv, timestamped_tags]
+    formula: 'w=exp(-ln(2)*(T-t)/half_life); days_since_last_rating; monthly/yearly counts'
+    availability: event_timestamp<T; UTC calendar and rating-event meaning
+    missing: Empty history has missing recency and zero observed event count; tags/rating counts separate.
+    shrinkage: Train activity prior; report effective sample size and censoring at source horizon.
+  - id: preference_drift
+    hypotheses: [H06]
+    sources: [genre_affinity, semantic_affinity, recency_activity]
+    formula: 'JS(smoothed_short_distribution, smoothed_long_distribution) with both windows ending before T'
+    availability: All window endpoints and component availability<T
+    missing: Insufficient support in either window gives missing drift, not stable preference.
+    shrinkage: Common train-vocabulary Dirichlet prior; sensitivity over approved window grid.
+  - id: sequence_transitions
+    hypotheses: [H07]
+    sources: [ratings.csv, eligible_genres_semantics]
+    formula: 'bounded lag transition counts on stable rating-event order; exclude ambiguous within-tie transitions'
+    availability: Both transition events and component metadata<T
+    missing: Fewer than two untied events returns missing transition profile.
+    shrinkage: Train transition distribution; cap lags and vocabulary, disclose truncation.
+  - id: collaborative_signal
+    hypotheses: [H08]
+    sources: [ratings.csv]
+    formula: 'bounded sparse overlap-centered cosine with n_overlap/(n_overlap+lambda); latent signals only in later model tasks'
+    availability: Both users overlap events and neighbor construction<T
+    missing: No supported neighbors returns content/popularity fallback flag; never join external users.
+    shrinkage: Overlap support prior and bounded top neighbors, no global quadratic matrix.
+  - id: train_popularity
+    hypotheses: [H09, H10, H12]
+    sources: [ratings.csv, eligible_catalog]
+    formula: 'p_i=(n_i+alpha)/(N+alpha*catalog_size_T), all counts from t<T'
+    availability: Count events and catalog evidence<T; no current external popularity
+    missing: Unobserved eligible item uses approved smoothing; unknown catalog item remains ineligible in strict mode.
+    shrinkage: Alpha prior chosen on validation; disclose count versus unique-user counts.
+  - id: diversity_novelty
+    hypotheses: [H09, H10]
+    sources: [eligible_genres_semantics, train_popularity, ratings.csv]
+    formula: 'mean pairwise 1-cosine on bounded seeded history pairs; mean -log2(p_i)'
+    availability: Every history event, item vector and popularity statistic<T
+    missing: Fewer than two vectors means missing diversity; missing popularity yields missing novelty.
+    shrinkage: Support-weighted train diversity/novelty prior; disclose pair sampling error.
+  - id: history_confidence
+    hypotheses: [H01, H08, H11]
+    sources: [ratings.csv, availability_mask]
+    formula: 'n_eff=sum(w)^2/sum(w^2); confidence=n_eff/(n_eff+lambda), source coverage separate'
+    availability: All evidence_timestamp<T
+    missing: No history gives n_eff=0, confidence=0 and explicit cold flag; cohort definitions require D-09.
+    shrinkage: Interpolate personal profile and train prior; confidence is support, not calibrated probability without evidence.
+  - id: availability_mask
+    hypotheses: [H03, H04, H11, H12]
+    sources: [source_manifests, release_intervals, timestamped_events]
+    formula: 'per-feature present, source_version, coverage, available_at, as_of_valid and exclusion_reason'
+    availability: Evidence available_at<T; fetched_at alone does not prove pre-cutoff availability
+    missing: Unknown temporal availability is false for strict eligibility; preserve unknown reason separately.
+    shrinkage: None; provenance/availability cannot be imputed by a statistical prior.

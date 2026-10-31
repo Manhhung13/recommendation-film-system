@@ -1,0 +1,31 @@
+id: DATA-QUALITY-001
+title: Comprehensive version-bound data readiness gate
+type: data
+source_slides: [3, 4, 6, 11]
+status: BLOCKED
+dependencies: [DATA-001, DATA-002, DATA-003, DATA-004, DATA-005, DATA-006]
+description: Planning registration only. Validate full data semantics and provenance before research; file presence or a crawl summary is insufficient.
+allowed_paths: [src/recommender/data/, tests/data/, docs/research/, contracts/]
+acceptance_criteria:
+  - id: DATA-QUALITY-001-AC-01
+    description: Stream all required sources; validate schemas, IDs, uniqueness, malformed rows, nulls, mapping cardinality and source integrity against a hashed version manifest.
+    planned_test: tests/data/test_data_quality_001.py
+    test_case: test_data_quality_001_source_integrity
+  - id: DATA-QUALITY-001-AC-02
+    description: Validate UTC rating/tag/fetch timestamps, relevance/rating ranges, releases, missing metadata, source drift and explicit coverage denominators without modifying raw files.
+    planned_test: tests/data/test_data_quality_001.py
+    test_case: test_data_quality_001_temporal_and_missing_data
+  - id: DATA-QUALITY-001-AC-03
+    description: Reject untrusted, stale or mismatched tests/review/exact-SHA product CI/manifest; distinguish permanent exclusions from successful TMDb payloads and approved missing-source policy.
+    planned_test: tests/data/test_data_quality_001.py
+    test_case: test_data_quality_001_evidence
+required_checks: [unit_tests, integration_tests, data_validation, schema_validation, id_mapping_checks, provenance, independent_review, github_ci]
+blocked_on_decision: [D-08]
+policy_notes:
+  - Registered by local SDLC-RESEARCH-PLAN-001; not executed or VERIFIED.
+  - Existing verify_raw_data.py writes a report and is not this comprehensive gate.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[DATA-QUALITY-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

@@ -4,7 +4,7 @@
 
 **Milestone 0 — Agent foundations:** SETUP-001. Bootstrap Codex rules, reproducible CI, task registry and minimal verifier. Check scripts run before developing products.
 
-**Milestone 1 — Data integrity:** DATA-001 → DATA-002, DATA-003, DATA-004, DATA-005 → DATA-006 → SPLIT-001. Preserve raw source, movie ID mappings and temporal boundaries.
+**Milestone 1 — Data integrity and research:** DATA-001 → DATA-002, DATA-003, DATA-004, DATA-005 → DATA-006; DATA-001..006 → DATA-QUALITY-001 → RESEARCH-001 → EDA-001 → SPLIT-001. SPLIT-001 retains DATA-006. Preserve raw sources, movie ID mappings and temporal boundaries. The three new tasks are registered BLOCKED. Root-level `docs/research/RESEARCH_FRAMEWORK.md` contains planning drafts, not execution or empirical evidence. Protected CLI starts/resumes require external signed readiness evidence as described there.
 
 **Milestone 2 — Baselines:** BASE-001, CF-001, CF-002, MF-001, CONTENT-001, KNOW-001, SEQ-001. Sequence/SASRec can be postponed to an advanced milestone; never falsely report it implemented.
 

@@ -1,0 +1,31 @@
+id: RESEARCH-001
+title: Validate preference research framework against verified data
+type: data
+source_slides: [2, 3, 4, 5, 6, 8, 11]
+status: BLOCKED
+dependencies: [DATA-QUALITY-001]
+description: Planning drafts may be authored now; execute research validation only after signed readiness evidence, approved business decisions and a matching dataset manifest. No training.
+allowed_paths: [docs/research/, configs/research/, tests/research/]
+acceptance_criteria:
+  - id: RESEARCH-001-AC-01
+    description: Validate H01-H12 fields, data dictionary and point-in-time feature definitions against approved versioned sources; no unsupported findings.
+    planned_test: tests/research/test_research_001.py
+    test_case: test_research_001_registry_and_dictionary
+  - id: RESEARCH-001-AC-02
+    description: Validate cutoff/split/label/ablation protocols, strict versus enriched metadata eligibility, sparse users and uncertainty with synthetic boundary fixtures.
+    planned_test: tests/research/test_research_001.py
+    test_case: test_research_001_temporal_protocol
+  - id: RESEARCH-001-AC-03
+    description: Reject premature start and resume including forged local VERIFIED/RUNNING states, missing review, stale exact-SHA CI and dataset-version drift.
+    planned_test: tests/research/test_research_001.py
+    test_case: test_research_001_readiness
+required_checks: [unit_tests, integration_tests, data_validation, independent_review, github_ci]
+blocked_on_decision: [D-03, D-04, D-08, D-09]
+policy_notes:
+  - D-03/D-04/D-09 defaults in planning documents are proposals only.
+  - Planning drafts do not satisfy this task's acceptance or unblock EDA-001.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[RESEARCH-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

@@ -8,6 +8,7 @@ source_slides:
 status: PLANNED
 dependencies:
 - DATA-006
+- EDA-001
 description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
 allowed_paths:
 - src/recommender/evaluation/

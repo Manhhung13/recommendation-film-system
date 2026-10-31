@@ -1,0 +1,189 @@
+version: 1
+document_status: PLANNING_DRAFT
+execution_task: RESEARCH-001
+notation:
+  history: H_u(T) contains valid rating events with t<T; it is not watch history.
+  residual: e_ui = r_ui - mu_T - b_u(T) - b_i(T), with priors fitted only on training history.
+  affinity: A_u(f,T) = sum(w_t*x_if*e_ui)/(lambda + sum(w_t*x_if)); report support and missing coverage.
+  caution: Proposed tests and algorithms are not executed; missing ratings are not negatives.
+hypotheses:
+  - id: H01
+    title: Rating bias and normalization
+    H0: User-specific rating offsets have no stable incremental out-of-time explanatory value after item and time controls.
+    H1: Shrunk user bias or normalization improves held-out calibration or ranking within supported cohorts.
+    sources: [ratings.csv]
+    formulas: ['b_u=sum(r_ui-mu_T)/(n_u+lambda)', 'z_ui=(r_ui-mean_u)/max(sd_u,epsilon), training-only']
+    required_features: [rating_bias, history_confidence]
+    cohorts: [history_size, tenure, activity]
+    confounders: [item_popularity, item_quality, scale_use, calendar_time]
+    tests: [user_block_permutation, paired_normalization_ablation, constant_rating_user_sensitivity]
+    metrics: [bias_variance, held_out_residual_error, delta_ndcg_at_k]
+    uncertainty: User-cluster bootstrap intervals; report sparse/zero-variance cases and shrinkage sensitivity.
+    potential_algorithms: [bias_corrected_CF, biased_MF, normalized_Content]
+    evidence: []
+    status: UNTESTED
+  - id: H02
+    title: Genre affinity and consistency
+    H0: Residual ratings and future genre choices do not vary with prior genre affinity beyond item/time/popularity effects.
+    H1: Supported genre affinity is stable across windows and adds out-of-time value.
+    sources: [ratings.csv, movies.csv]
+    formulas: ['x_ig=1/genre_count_i for observed genre g', 'A_u(g,T)=sum(w*x_ig*e_ui)/(lambda+sum(w*x_ig))']
+    required_features: [genre_affinity, rating_bias, history_confidence]
+    cohorts: [genre_support, history_size, metadata_coverage]
+    confounders: [multi_genre_movies, popularity, release_cohort, missing_genres]
+    tests: [within_popularity_time_stratum_permutation, split_window_consistency, genre_ablation]
+    metrics: [affinity_effect_size, window_rank_correlation, delta_recall_at_k]
+    uncertainty: Cluster intervals and support counts per genre; do not interpret absent genre exposure as aversion.
+    potential_algorithms: [genre_Content, genre_aware_hybrid]
+    evidence: []
+    status: UNTESTED
+  - id: H03
+    title: Tags, Genome and semantic preferences
+    H0: Semantic affinity adds no predictive information beyond genre and observed item popularity.
+    H1: Time-eligible semantic features explain residual preference and improve held-out ranking.
+    sources: [ratings.csv, tags.csv, genome-scores.csv, genome-tags.csv, TMDb_overview_keywords]
+    formulas: ['s_u=sum(w_t*e_ui*v_i)/(lambda+sum(w_t*observed_v_i))', 'semantic_score=cos(s_u,v_i) when both norms>0']
+    required_features: [semantic_affinity, genre_affinity, availability_mask]
+    cohorts: [genome_coverage, tag_activity, language, history_size]
+    confounders: [community_tag_popularity, vocabulary_drift, full_snapshot_genome, missing_overviews]
+    tests: [genre_controlled_semantic_ablation, train_only_vocabulary_test, strict_enriched_sensitivity]
+    metrics: [incremental_ndcg_at_k, semantic_coverage, residual_association]
+    uncertainty: Bootstrap users; separate tag-event and snapshot semantics and report unsupported strict coverage.
+    potential_algorithms: [TFIDF_Content, embedding_Content, semantic_hybrid]
+    evidence: []
+    status: UNTESTED
+  - id: H04
+    title: Decade, runtime, language and creator affinity
+    H0: Attribute associations disappear after exposure, genre, popularity and time controls.
+    H1: Supported attribute affinities remain consistent and add incremental out-of-time value.
+    sources: [ratings.csv, movies.csv, TMDb_details_credits, IMDb_basics_crew_principals_names]
+    formulas: ['A_u(a,T)=sum(w*x_ia*e_ui)/(lambda+sum(w*x_ia))', 'movie_age=rating_event_date-release_interval with uncertainty']
+    required_features: [attribute_affinity, movie_age_preference, availability_mask]
+    cohorts: [attribute_support, language_coverage, release_decade, history_size]
+    confounders: [genre, director_cast_overlap, release_region, runtime_versions, missing_metadata]
+    tests: [matched_attribute_strata, creator_frequency_control, attribute_group_ablations]
+    metrics: [conditional_effect_size, delta_ndcg_at_k, coverage_by_attribute]
+    uncertainty: Interval-aware releases and cluster intervals; high-cardinality creator support is shrunk and disclosed.
+    potential_algorithms: [Knowledge, metadata_Content, attribute_hybrid]
+    evidence: []
+    status: UNTESTED
+  - id: H05
+    title: Feature interactions and nonlinear affinities
+    H0: Joint feature effects equal additive marginal affinities within uncertainty.
+    H1: Pre-registered limited crosses produce reproducible gains beyond additive terms.
+    sources: [ratings.csv, movies.csv, approved_metadata]
+    formulas: ['interaction(g,a)=E[e|g,a]-E[e|g]-E[e|a]+E[e]', 'shrink each joint cell by n/(n+lambda)']
+    required_features: [genre_affinity, attribute_affinity, limited_interactions, history_confidence]
+    cohorts: [joint_feature_support, head_tail_items, history_size]
+    confounders: [multiple_testing, correlated_features, sparse_cells, feature_selection_bias]
+    tests: [nested_temporal_additive_vs_cross_ablation, blocked_permutation, held_out_replication]
+    metrics: [interaction_effect, delta_ndcg_at_k, calibration, cell_support]
+    uncertainty: Pre-register crosses, cluster intervals and FDR; exclude unsupported crosses without treating them as zero.
+    potential_algorithms: [factorization_machine, nonlinear_ranker, constrained_hybrid]
+    evidence: []
+    status: UNTESTED
+  - id: H06
+    title: Recency and long/short-term preference drift
+    H0: Short-term profiles do not depart from long-term profiles beyond activity and sampling variation.
+    H1: Supported drift improves later rating-event preference estimates over static profiles.
+    sources: [ratings.csv, timestamped_tags, eligible_content]
+    formulas: ['w_t=exp(-ln(2)*(T-t)/half_life)', 'drift=JS(p_short,p_long), distributions smoothed on train vocabulary']
+    required_features: [recency_activity, preference_drift, genre_affinity, semantic_affinity]
+    cohorts: [recent_inactive, tenure, history_size, calendar_period]
+    confounders: [catalog_change, release_cycles, activity_bursts, retrospective_rating_batches]
+    tests: [time_block_permutation, static_vs_decayed_ablation, window_length_sensitivity]
+    metrics: [JS_divergence, window_stability, delta_ndcg_at_k]
+    uncertainty: User-cluster and time-block intervals; effective sample size must support both windows.
+    potential_algorithms: [time_decayed_CF, Temporal_Hybrid]
+    evidence: []
+    status: UNTESTED
+  - id: H07
+    title: Rating-event sequences and temporal transitions
+    H0: Event order adds no signal beyond item frequency, recency and user activity.
+    H1: Causally ordered rating-event transitions add reproducible predictive information.
+    sources: [ratings.csv, movies.csv, eligible_semantics]
+    formulas: ['P(g_next|g_prev)=shrunk_counts_before_T', 'lift=P(g_next|g_prev)/P(g_next), train-only denominators']
+    required_features: [sequence_transitions, recency_activity, history_confidence]
+    cohorts: [sequence_length, timestamp_tie_rate, activity]
+    confounders: [batched_ratings, no_watch_time, popularity, unequal_event_gaps]
+    tests: [within_history_order_shuffle, tied_block_invariance, causal_mask_and_future_append_test]
+    metrics: [transition_lift, conditional_entropy, delta_recall_at_k]
+    uncertainty: Cluster/block intervals; no session or watch-order interpretation; exclude ambiguous tied transitions.
+    potential_algorithms: [Markov_baseline, sequence_baseline, optional_SASRec]
+    evidence: []
+    status: UNTESTED
+  - id: H08
+    title: Collaborative similarity and latent preferences
+    H0: Bounded collaborative signals add no value beyond content, bias and popularity controls.
+    H1: Supported collaborative neighborhoods or latent representations improve temporal held-out recommendations.
+    sources: [ratings.csv, eligible_content]
+    formulas: ['sim(u,v)=shrunk_cosine(centered_sparse_overlap)', 'overlap_shrink=n_overlap/(n_overlap+lambda)']
+    required_features: [collaborative_signal, rating_bias, history_confidence]
+    cohorts: [overlap_support, warm_sparse_users, popular_tail_items]
+    confounders: [shared_popular_items, exposure_selection, sparse_overlap, test_leakage]
+    tests: [degree_preserving_control, content_vs_collaborative_ablation, temporal_neighbor_boundary]
+    metrics: [overlap_adjusted_similarity, delta_ndcg_at_k, cohort_coverage]
+    uncertainty: Sparse bootstrap support and neighbor sensitivity; latent interpretations require later model evidence.
+    potential_algorithms: [User_CF, Item_CF, MF_SVD]
+    evidence: []
+    status: UNTESTED
+  - id: H09
+    title: Popularity, long tail and selection bias
+    H0: Apparent individual affinity is explained by train-period popularity and observed selection.
+    H1: Preference differences remain within popularity/time strata and support tail-aware personalization.
+    sources: [ratings.csv, links.csv, coverage_audit]
+    formulas: ['p_i(T)=(n_i+alpha)/(N+alpha*catalog_size_T)', 'tail_exposure=sum(recommendations_in_train_defined_tail)/all_recommendations']
+    required_features: [train_popularity, genre_affinity, history_confidence]
+    cohorts: [head_mid_tail, history_size, metadata_coverage]
+    confounders: [unknown_exposure, platform_selection, source_coverage, movie_age]
+    tests: [popularity_stratified_permutation, Popularity_baseline_comparison, tail_threshold_sensitivity]
+    metrics: [exposure_concentration, tail_coverage, cohort_recall_at_k]
+    uncertainty: Cluster intervals; propensity correction is sensitivity only when exposure propensities are unobserved.
+    potential_algorithms: [Popularity, popularity_calibrated_hybrid, tail_rerank]
+    evidence: []
+    status: UNTESTED
+  - id: H10
+    title: Diversity, novelty and exploration preference
+    H0: Prior variety or novelty has no stable association with later observed preference after activity controls.
+    H1: Supported variety/novelty profiles identify a useful accuracy-diversity tradeoff in later evaluation.
+    sources: [ratings.csv, eligible_genres_semantics, train_popularity]
+    formulas: ['diversity_u=mean(1-cos(v_i,v_j)) on bounded deterministic history pairs', 'novelty_u=mean(-log2(p_i(T)))']
+    required_features: [diversity_novelty, train_popularity, history_confidence]
+    cohorts: [history_size, genre_breadth, tail_affinity, activity]
+    confounders: [unknown_exposure, activity_length, genre_missingness, release_age]
+    tests: [matched_history_length_comparison, no_rerank_vs_MMR_ablation, time_window_replication]
+    metrics: [intra_list_diversity, novelty, catalog_coverage, ndcg_tradeoff]
+    uncertainty: User-cluster intervals and pair-sampling error; observed variety does not establish exploration intent.
+    potential_algorithms: [MMR_rerank, calibrated_diversity_hybrid]
+    evidence: []
+    status: UNTESTED
+  - id: H11
+    title: Sparse users, cold-start and profile confidence
+    H0: Confidence/shrinkage provides no improvement over unshrunk profiles within approved sparse cohorts.
+    H1: Support-aware profiles and fallbacks improve robustness while expressing uncertainty.
+    sources: [ratings.csv, metadata_coverage, approved_cold_start_policy]
+    formulas: ['n_eff=(sum(w))^2/sum(w^2)', 'profile=confidence*personal+(1-confidence)*train_prior; confidence=n_eff/(n_eff+lambda)']
+    required_features: [history_confidence, availability_mask, rating_bias]
+    cohorts: [zero_history, one_event, sparse_warm, new_items]
+    confounders: [MovieLens_active_user_selection, history_truncation_bias, no_real_new_user_sample]
+    tests: [train_only_history_truncation, zero_one_event_fixtures, shrinkage_vs_no_shrinkage_ablation]
+    metrics: [coverage, profile_variance, sparse_cohort_recall, confidence_calibration]
+    uncertainty: Wide intervals remain visible; simulated cold-start is separate from real absent platform users.
+    potential_algorithms: [Popularity_fallback, Content_cold_item, confidence_gated_hybrid]
+    evidence: []
+    status: UNTESTED
+  - id: H12
+    title: Point-in-time validity, availability and leakage
+    H0: Claimed preference evidence is unchanged by enforcing verified as-of feature and catalog availability.
+    H1: Availability enforcement changes usable coverage or effects, exposing sensitivity in enriched claims.
+    sources: [all_source_manifests, ratings.csv, timestamped_tags, Genome_version, TMDb_fetch_provenance, IMDb_snapshot_version]
+    formulas: ['valid(f,i,T)=event_time<T and available_at<T and release_upper<T', 'leakage_rate=invalid_feature_records/audited_feature_records']
+    required_features: [availability_mask, train_popularity, all_point_in_time_features]
+    cohorts: [strict_enriched_mode, cutoff, metadata_source_version, unknown_release]
+    confounders: [strict_coverage_selection, missing_snapshots, regional_releases, fetch_vs_effective_time]
+    tests: [future_append_invariance, release_and_availability_boundaries, strict_enriched_separate_audit, source_drift_rejection]
+    metrics: [eligible_coverage, invalid_feature_count, effect_sensitivity, unknown_availability_rate]
+    uncertainty: Unknown availability cannot be resolved statistically; report bounds and exclusions, never invent historical snapshots.
+    potential_algorithms: [as_of_feature_store, temporal_baselines, retrospective_sensitivity_only]
+    evidence: []
+    status: UNTESTED

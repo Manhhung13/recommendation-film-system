@@ -1,0 +1,31 @@
+id: EDA-001
+title: Deterministic read-only empirical preference exploration
+type: data
+source_slides: [2, 3, 4, 5, 6, 8, 11]
+status: BLOCKED
+dependencies: [RESEARCH-001]
+description: Execute only after trusted transitive prerequisite evidence and manifest verification. Use chunked or columnar analysis; no training, acquisition, raw mutation or user-level tracked exports.
+allowed_paths: [src/recommender/research/, tests/research/, docs/research/, configs/research/]
+acceptance_criteria:
+  - id: EDA-001-AC-01
+    description: Deterministic chunk-size-invariant sparse aggregates for rating/user/item activity, bias, first/last timestamps, monthly/yearly timelines, cohorts and source coverage; handle malformed and optional missing data explicitly.
+    planned_test: tests/research/test_eda_001.py
+    test_case: test_eda_001_profiles_and_integrity
+  - id: EDA-001-AC-02
+    description: Cutoff comparisons use only history before T, release and historical-availability eligibility; audit future positives, ties, sparse users, metadata uncertainty and no future leakage.
+    planned_test: tests/research/test_eda_001.py
+    test_case: test_eda_001_cutoffs_and_no_future_leakage
+  - id: EDA-001-AC-03
+    description: Compute affinities/interactions/drift/sequences/popularity/diversity/novelty and confidence with bounded computation; publish consistent aggregate reports, dashboard, evidence and reproducibility manifest bound to inputs.
+    planned_test: tests/research/test_eda_001.py
+    test_case: test_eda_001_evidence_and_report_consistency
+required_checks: [unit_tests, integration_tests, data_validation, independent_review, github_ci]
+blocked_on_decision: [D-03, D-04, D-08, D-09]
+policy_notes:
+  - A future empirical task; no EDA implementation or findings in this planning change.
+  - No dense user-item matrix or global all-pairs similarity.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[EDA-001]'
+  push_after_local_review: true
+  mark_verified_after_remote_ci: true

@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import yaml
+from readiness import PROTECTED_TASKS, ReadinessError, verify_readiness
 
 KIT_ROOT = Path(__file__).resolve().parents[1]
 ROOT = KIT_ROOT.parent
@@ -34,6 +35,9 @@ def load_tasks(root=ROOT):
             raise ValueError('Invalid or duplicate task ID/file '+str(entry))
         task=yaml.safe_load((registry/entry['file']).read_text(encoding='utf-8'))
         if task['id']!=tid: raise ValueError('Task ID mismatch '+tid)
+        for key, task_key in (('dependencies','dependencies'),('slides','source_slides'),('type','type')):
+            if entry.get(key) != task.get(task_key):
+                raise ValueError('Index/contract mismatch '+tid+': '+key)
         tasks[tid]=task
     return tasks
 
@@ -87,11 +91,24 @@ def write_state(s,root=ROOT):
 def status(tid,state):
     return state.get('tasks',{}).get(tid,{}).get('status','PLANNED')
 
-def eligible_tasks(tasks,state,approvals=()):
+def assert_ready(tasks,tid,state,approvals=(),root=ROOT):
     approved=set(approvals)
-    return [tid for tid,t in tasks.items() if status(tid,state) in ('PLANNED','READY')
-            and all(status(dep,state)=='VERIFIED' for dep in t.get('dependencies',[]))
-            and all(d in approved for d in t.get('blocked_on_decision',[]))]
+    if tid in PROTECTED_TASKS:
+        approved=verify_readiness(tasks,tid,root)
+    if not all(status(dep,state)=='VERIFIED' for dep in tasks[tid].get('dependencies',[])):
+        raise ValueError('Task blocked by dependencies')
+    if not all(d in approved for d in tasks[tid].get('blocked_on_decision',[])):
+        raise ValueError('Task blocked by open business decisions')
+
+def eligible_tasks(tasks,state,approvals=(),root=ROOT):
+    approved=set(approvals)
+    eligible=[]
+    for tid in tasks:
+        if status(tid,state) not in ('PLANNED','READY'):continue
+        try:assert_ready(tasks,tid,state,approved,root)
+        except ValueError:continue
+        eligible.append(tid)
+    return eligible
 
 def local_tests_for_task(task,root=ROOT):
     selections=[]
@@ -106,6 +123,13 @@ def local_tests_for_task(task,root=ROOT):
     return selections
 
 def run_local(task,root=ROOT):
+    # This direct Python entrypoint is guarded as well as the CLI. Re-check on
+    # resume: an old RUNNING state must not authorize changed data/evidence.
+    if task['id'] in PROTECTED_TASKS:
+        tasks=load_tasks(root)
+        assert_ready(tasks,task['id'],read_state(root),root=root)
+        if task != tasks[task['id']]:
+            raise ValueError('Runner task differs from registered contract')
     tid=task['id'];folder=root/'.runtime/evidence'/tid;folder.mkdir(parents=True,exist_ok=True)
     suffix=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     report_path=folder/('local-'+suffix+'.json');log_path=folder/('local-'+suffix+'.log')
@@ -151,7 +175,8 @@ def main(argv=None):
         if args.action=='show':
             print(yaml.safe_dump(tasks[tid],sort_keys=False,allow_unicode=True));print('RUNTIME:',status(tid,state));return 0
         if args.action=='start':
-            if tid not in eligible_tasks(tasks,state):raise ValueError('Task blocked by dependencies or open business decisions')
+            if status(tid,state) not in ('PLANNED','READY'):raise ValueError('Task is not PLANNED or READY')
+            assert_ready(tasks,tid,state)
             old=state['tasks'].get(tid,{})
             state['tasks'][tid]={'status':'RUNNING','attempt':old.get('attempt',0)+1,'started_at':now()}
             write_state(state);print(tid,'RUNNING (local demo)');return 0
