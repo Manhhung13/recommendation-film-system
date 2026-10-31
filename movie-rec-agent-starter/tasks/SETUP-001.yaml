@@ -47,3 +47,6 @@ git:
   commit_prefix: '[SETUP-001]'
   push_after_tests: true
   done_after_tests_commit_push_remote_sha: true
+test_suites:
+- tests/harness
+- movie-rec-agent-starter/tests/harness

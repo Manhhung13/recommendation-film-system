@@ -69,7 +69,7 @@ def test_sdlc_integration_001_workflow_runs_harness():
 
     commands = [step["run"] for step in steps if "run" in step]
     assert commands == [
-        "python -m pip install -r movie-rec-agent-starter/requirements-agent.txt",
+        "python -m pip install -r requirements-test.txt",
         "python -B movie-rec-agent-starter/scripts/agentctl.py validate",
         "python -B -m unittest discover -s movie-rec-agent-starter/tests/harness -v",
         "python -B -m pytest -q tests/harness/test_integration_001.py",

@@ -1,0 +1,8 @@
+# Test environment: CI Python 3.12, local Python 3.13; no application/data downloads.
+PyYAML==6.0.3
+pytest==9.2.0
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+colorama==0.4.6; sys_platform == "win32"
