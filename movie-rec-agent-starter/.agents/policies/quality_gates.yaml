@@ -1,18 +1,18 @@
-version: 1
+version: 2
 phase_order:
-- requirements
-- design
-- implementation
-- local_tests
-- review
-- commit
-- push
-- remote_ci
-- verified
+- ELIGIBLE
+- IMPLEMENT
+- TEST
+- COMMIT
+- PUSH
+- DONE
 always_required:
 - acceptance_tests
-- independent_review
-- remote_ci_sha_match
+- task_dependencies
+- dataset_integrity
+- scoped_commit
+- successful_push
+- remote_head_sha_match
 conditional_by_type:
   data:
   - schema_validation
@@ -36,10 +36,15 @@ ml_metric_definitions:
 - coverage
 - diversity
 - novelty
-threshold_policy: Must be agreed before model evaluation; slide provides metrics, not numeric thresholds.
+threshold_policy: Must be agreed before model evaluation; slide provides metrics,
+  not numeric thresholds.
 agent_contract_ci_checks:
 - validate-contracts
 product_ci_checks:
 - test
-state_progression: No transition to VERIFIED without trusted remote CI result for exact head_sha; local runner
-  demo does not implement production enforcement.
+state_progression: DONE requires passing real tests, scoped task commit and successful
+  push with origin branch SHA equal to local HEAD. CI is reported separately.
+owner_decision: D-SDLC-2026-10-31
+optional_checks:
+- independent_review
+- github_ci

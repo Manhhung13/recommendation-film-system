@@ -1,12 +1,10 @@
 retry_limit: 2
 on_local_failure: NEEDS_REWORK
-on_review_reject: NEEDS_REWORK
-on_ci_failure: NEEDS_REWORK
+on_ci_failure: REPORT_SEPARATELY
 on_missing_product_decision: BLOCKED
 on_retry_exhaustion: BLOCKED
 human_approval_required_for:
 - new_data_source
 - production_deploy
 - change_evaluation_protocol
-- override_quality_gate
 - merge_protected_branch

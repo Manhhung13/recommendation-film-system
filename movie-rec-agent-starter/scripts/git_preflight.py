@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Read-only preflight for a proposed task commit. Does NOT commit or push.
 
-Checks changed-file path allowlist, branch policy and local status. A real controller
-MUST separately verify trusted independent review and CI; local state is not secure.
+Checks explicit staged scope, branch policy and prohibited artifact paths.
 """
 import argparse
 from pathlib import Path
@@ -36,6 +35,21 @@ def check_allowed_paths(paths, allowed):
         if not matches:bad.append(p)
     return bad
 
+def check_safe_paths(paths):
+    """Conservative filename guard; staged content still needs human inspection."""
+    bad=[]
+    for name in paths:
+        p=Path(name.lower().replace('\\','/'))
+        if (any(part in {'dataset_linkage_work','.runtime','.git'} for part in p.parts)
+                or p.parts[0] in {'data','datasets'}
+                or any(part.startswith('.venv') for part in p.parts)
+                or (p.name.startswith('.env') and p.name not in {'.env.example','.env.sample'})
+                or p.suffix in {'.pem','.key','.pkl','.pt','.pth','.onnx','.parquet'}
+                or p.name in {'credentials.json','secrets.json'}):
+            bad.append(name)
+    return bad
+
+
 
 def main():
     cli=argparse.ArgumentParser()
@@ -45,21 +59,20 @@ def main():
         task=yaml.safe_load((tasks_root(ROOT)/f'{args.task_id}.yaml').read_text(encoding='utf-8'))
         if task['id']!=args.task_id:raise ValueError('task ID mismatch')
         current_status=status(args.task_id,read_state())
-        if current_status!='LOCAL_VERIFIED':raise ValueError('Local verification missing for '+args.task_id)
+        if current_status!='TEST':raise ValueError('Passing local tests missing for '+args.task_id)
         branch=git('branch','--show-current')
         if not branch.startswith('feature/'):
             raise ValueError('Expected feature/ branch; refusing main/other branch: '+branch)
-        # Note: --others tracks untracked; staged/unstaged tracked changes in diff HEAD
-        tracked=[x for x in git('diff','--name-only','HEAD').splitlines() if x]
-        other=[x for x in git('ls-files','--others','--exclude-standard').splitlines() if x]
-        changed=sorted(set(tracked+other))
+        changed=git('diff','--cached','--name-only').splitlines()
         if not changed:raise ValueError('No file changes to commit')
         bad=check_allowed_paths(changed,task['allowed_paths'])
+        bad+=check_safe_paths(changed)
         if bad:raise ValueError('Changes outside allowed task scope: '+', '.join(bad))
-        print('PREFLIGHT PASS (not a review approval or permission to push):',args.task_id)
+        git('diff','--check');git('diff','--cached','--check')
+        print('PREFLIGHT PASS:',args.task_id)
         print('Branch:',branch)
         print('Changed paths:',*changed,sep='\n - ')
-        print('Next: obtain separate authorized code review + trusted git publisher')
+        print('Next: inspect staged content, commit with TASK-ID, push, then agentctl complete')
         return 0
     except (OSError,ValueError,KeyError,RuntimeError) as exc:
         print('PREFLIGHT FAILED:',exc,file=sys.stderr);return 2

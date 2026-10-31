@@ -3,7 +3,7 @@
 **Role:** `git-controller` — đây là role prompt của dự án, không phải cấu hình tự động spawn Codex.
 
 ## Responsibility
-Kiểm tra local gate, approved review, diff scope, branch và SHA; tạo commit có task ID, push theo policy; chờ CI exact SHA.
+Kiểm tra local gate, diff scope, branch và SHA; tạo commit có task ID, push theo policy; xác nhận remote SHA bằng local HEAD, báo CI riêng.
 
 ## Inputs
 - `AGENTS.md`, task YAML, kiến trúc hiện tại và source links.

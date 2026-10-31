@@ -7,7 +7,9 @@ source_slides:
 - 11
 status: PLANNED
 dependencies: []
-description: Integrate the existing reference kit into repository-root operation without changing data pipeline behavior.
+description: Integrate the existing reference kit into repository-root operation without
+  changing data pipeline behavior. Revalidate under owner-approved lightweight development
+  policy; retire external trust controllers.
 allowed_paths:
 - AGENTS.md
 - .gitignore
@@ -31,14 +33,17 @@ acceptance_criteria:
 required_checks:
 - unit_tests
 - integration_tests
-- independent_review
-- github_ci
 policy_notes:
 - Do not change the data acquisition or validation pipeline.
-- Agent roles, tool contracts and declarative workflows require compatible runtime enforcement.
-- Remote CI must match the pushed commit SHA before VERIFIED.
+- Agent roles, tool contracts and declarative workflows require compatible runtime
+  enforcement.
+- 'D-SDLC-2026-10-31: tests, scoped commit, push and matching remote SHA required
+  for DONE; CI/review separate.'
 git:
   branch_rule: feature/<feature-name>
   commit_prefix: '[SDLC-INTEGRATION-001]'
-  push_after_local_review: true
-  mark_verified_after_remote_ci: true
+  push_after_tests: true
+  done_after_tests_commit_push_remote_sha: true
+test_suites:
+- tests/harness
+- movie-rec-agent-starter/tests/harness

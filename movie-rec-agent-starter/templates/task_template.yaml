@@ -9,10 +9,11 @@ acceptance_criteria:
   - id: RECO-NEW-AC-01
     description: Describe business observable condition
     planned_test: tests/recommender/test_reco_new.py
-required_checks: [unit_tests, independent_review, github_ci]
+    test_case: test_reco_new_ac_01
+required_checks: [unit_tests, integration_tests]
 blocked_on_decision: []
 git:
   branch_rule: feature/<feature-name>
   commit_prefix: '[RECO-NEW]'
-  push_after_local_review: true
-  mark_verified_after_remote_ci: true
+  push_after_tests: true
+  done_after_tests_commit_push_remote_sha: true

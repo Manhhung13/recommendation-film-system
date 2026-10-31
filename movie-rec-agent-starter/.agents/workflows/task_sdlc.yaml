@@ -1,49 +1,13 @@
 id: task-sdlc
-description: Reference declarative state workflow; not executable without runner.
-states:
-- PLANNED
-- READY
-- RUNNING
-- LOCAL_VERIFIED
-- REVIEW_APPROVED
-- COMMITTED
-- CI_PENDING
-- VERIFIED
-- NEEDS_REWORK
-- BLOCKED
+owner_decision: D-SDLC-2026-10-31
+states: [ELIGIBLE, IMPLEMENT, TEST, COMMIT, PUSH, DONE, NEEDS_REWORK, BLOCKED]
 transitions:
-- from: PLANNED
-  to: READY
-  when: all_dependencies_verified_and_decisions_approved
-- from: READY
-  to: RUNNING
-  when: task_lease_granted
-- from: RUNNING
-  to: LOCAL_VERIFIED
-  when: required_tests_exit_zero_and_evidence_exists
-- from: LOCAL_VERIFIED
-  to: REVIEW_APPROVED
-  when: independent_review_approved
-- from: REVIEW_APPROVED
-  to: COMMITTED
-  when: git_commit_created_in_allowed_branch
-- from: COMMITTED
-  to: CI_PENDING
-  when: push_done_and_head_sha_recorded
-- from: CI_PENDING
-  to: VERIFIED
-  when: github_required_checks_pass_exact_sha
-- from: RUNNING
-  to: NEEDS_REWORK
-  when: local_test_failure
-- from: LOCAL_VERIFIED
-  to: NEEDS_REWORK
-  when: review_rejected
-- from: CI_PENDING
-  to: NEEDS_REWORK
-  when: github_ci_failed
-- from: NEEDS_REWORK
-  to: BLOCKED
-  when: retry_limit_reached
-state_store: PostgreSQL for production; .runtime/state.json demo only
+  - {from: ELIGIBLE, to: IMPLEMENT, when: dependency_receipts_and_business_decisions_valid}
+  - {from: IMPLEMENT, to: TEST, when: real_required_tests_pass}
+  - {from: TEST, to: COMMIT, when: scoped_diff_safe_and_task_commit_created}
+  - {from: COMMIT, to: PUSH, when: push_succeeds}
+  - {from: PUSH, to: DONE, when: committed_tests_pass_and_remote_sha_equals_head}
+  - {from: IMPLEMENT, to: NEEDS_REWORK, when: tests_fail}
+state_store: .runtime/state.json is a cache; validated Git/test receipts determine completion
+ci: reported separately, never assumed passed
 no_auto_merge_to_main: true

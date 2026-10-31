@@ -1,6 +1,6 @@
 id: git-publisher
 kind: project_tool_contract
-description: Commit on safe feature branch after local gate and review
+description: Commit on safe feature branch after passing automated tests; confirm remote SHA
 commands_examples:
 - git add <explicit paths>
 - 'git commit -m "feat(scope): task [TASK-ID]"'

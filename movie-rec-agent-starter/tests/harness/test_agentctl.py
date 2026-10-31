@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 import copy
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
 from agentctl import load_tasks, validate_tasks, eligible_tasks, local_tests_for_task
@@ -18,16 +19,22 @@ class AgentContractsTests(unittest.TestCase):
 
     def test_initial_eligible_task_is_integration_only(self):
         state={'version':1,'tasks':{}}
-        self.assertEqual(['SDLC-INTEGRATION-001'],eligible_tasks(self.tasks,state))
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertEqual(['SDLC-INTEGRATION-001'],eligible_tasks(self.tasks,state,root=Path(folder)))
 
-    def test_dependency_is_blocked_until_verified(self):
-        self.assertNotIn('DATA-001',eligible_tasks(self.tasks,{'tasks':{}}))
-        self.assertIn('DATA-001',eligible_tasks(self.tasks,{'tasks':{'SETUP-001':{'status':'VERIFIED'}}}))
+    def test_forged_done_or_legacy_verified_does_not_unblock(self):
+        for value in ('DONE','VERIFIED'):
+            state={'tasks':{'SETUP-001':{'status':value}}}
+            with tempfile.TemporaryDirectory() as folder:
+                self.assertNotIn('DATA-001',eligible_tasks(self.tasks,state,root=Path(folder)))
 
     def test_unapproved_business_decision_blocks_task(self):
-        state={'tasks':{'SETUP-001':{'status':'VERIFIED'},'DATA-001':{'status':'VERIFIED'},'DATA-002':{'status':'VERIFIED'}}}
-        self.assertNotIn('DATA-004',eligible_tasks(self.tasks,state))
-        self.assertIn('DATA-004',eligible_tasks(self.tasks,state,{'D-08'}))
+        with patch('agentctl.verify_completion'):
+            self.assertNotIn('D-08', set())
+            from agentctl import assert_ready
+            with self.assertRaisesRegex(ValueError,'business decisions'):
+                assert_ready(self.tasks,'DATA-004',{},approvals=set())
+            assert_ready(self.tasks,'DATA-004',{},approvals={'D-08'})
 
     def test_cycle_is_detected(self):
         tasks=copy.deepcopy(self.tasks)

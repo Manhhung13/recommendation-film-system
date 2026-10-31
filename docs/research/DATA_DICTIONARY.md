@@ -1,3 +1,7 @@
+> SDLC update D-SDLC-2026-10-31: governance clauses below are superseded by
+> docs/agent/DEVELOPMENT_SDLC.md. Tests, Git completion receipts, approved business
+> decisions and dataset integrity remain required; signatures/review/CI are optional.
+
 # Data dictionary — observed schema, unmeasured quality
 
 Planning inventory on 2026-10-31: six MovieLens/Genome CSV headers, four IMDb gzip headers, and **one metadata envelope's keys per TMDb JSONL** were read. This is neither full schema validation nor empirical EDA. Row counts, distinct users/items, missingness, mapping coverage, release conflicts and temporal ranges are **NOT_MEASURED**. A field observed in one payload is not guaranteed in others. Types below are expected source types for future validation, not inferred validity of every local value.

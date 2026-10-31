@@ -1,3 +1,7 @@
+> SDLC update D-SDLC-2026-10-31: governance clauses below are superseded by
+> docs/agent/DEVELOPMENT_SDLC.md. Tests, Git completion receipts, approved business
+> decisions and dataset integrity remain required; signatures/review/CI are optional.
+
 # Bias and leakage risks — planning register
 
 All controls require validation; no risk is marked resolved by documentation.

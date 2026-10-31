@@ -1,3 +1,7 @@
+> SDLC update D-SDLC-2026-10-31: governance clauses below are superseded by
+> docs/agent/DEVELOPMENT_SDLC.md. Tests, Git completion receipts, approved business
+> decisions and dataset integrity remain required; signatures/review/CI are optional.
+
 # Temporal research protocol — proposed, not executed
 
 D-03, D-04, D-08 and D-09 must be approved before dependent work. No cutoff, rating threshold, cold-user boundary or model is selected by this document.

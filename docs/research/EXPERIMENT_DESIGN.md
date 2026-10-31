@@ -1,3 +1,7 @@
+> SDLC update D-SDLC-2026-10-31: governance clauses below are superseded by
+> docs/agent/DEVELOPMENT_SDLC.md. Tests, Git completion receipts, approved business
+> decisions and dataset integrity remain required; signatures/review/CI are optional.
+
 # Experiment design — future model tasks only
 
 These are reproducible study specifications. No models or baselines are trained in this planning task, RESEARCH-001 or EDA-001. No empirical metric thresholds are assumed. D-03/D-04/D-05/D-09 and relevant source decisions must be approved before evaluation.

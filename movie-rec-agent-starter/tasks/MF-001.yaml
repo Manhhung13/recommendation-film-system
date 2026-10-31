@@ -7,7 +7,8 @@ source_slides:
 status: PLANNED
 dependencies:
 - SPLIT-001
-description: Task contract for Codex. Implement only when dependencies are VERIFIED and business decisions approved.
+description: Task contract for Codex. Implement only when dependencies are DONE and
+  business decisions approved.
 allowed_paths:
 - src/recommender/models/
 - tests/recommender/
@@ -28,13 +29,12 @@ required_checks:
 - unit_tests
 - integration_tests
 - ml_evaluation
-- independent_review
-- github_ci
 policy_notes:
 - Do not assert acceptance without running actual tests.
-- Remote CI must match pushed commit SHA.
+- 'D-SDLC-2026-10-31: tests, scoped commit, push and matching remote SHA required
+  for DONE; CI/review separate.'
 git:
   branch_rule: feature/<feature-name>
   commit_prefix: '[MF-001]'
-  push_after_local_review: true
-  mark_verified_after_remote_ci: true
+  push_after_tests: true
+  done_after_tests_commit_push_remote_sha: true

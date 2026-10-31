@@ -1,0 +1,7 @@
+schema_version: 1
+decisions:
+  D-SDLC-2026-10-31:
+    status: APPROVED
+    approved_by: repository owner
+    source: Explicit owner instruction in Codex on 2026-10-31, SIMPLIFY SDLC AND RESUME DEVELOPMENT.
+    scope: Development SDLC only; no open product decision D-01 through D-10 is approved by this change.
