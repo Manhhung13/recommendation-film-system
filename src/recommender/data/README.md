@@ -53,3 +53,39 @@ records, schema, references, provenance, laziness and read-only behavior. A boun
 local-source case reuses the existing header checker and verifies real raw hashes;
 CI skips this case when data is absent and never downloads datasets. Full real-data
 audit evidence is ignored under `.runtime/evidence/DATA-001/`.
+
+## DATA-002: ID mapping
+
+`build_movie_id_mapping()` reads `movies.csv` and `links.csv` with DATA-001's
+loaders, streams the existing IMDb `title.basics.tsv.gz` and TMDb
+`movie_details.jsonl`, and returns a `MovieIdMapping`. It opens no ratings,
+tags or external user tables. It makes no title or user ID joins, performs no
+downloads, and never writes raw data. Callers can pass alternate source paths
+for synthetic fixtures.
+
+```python
+from recommender.data import build_movie_id_mapping
+
+mapping = build_movie_id_mapping()
+item = mapping[1]  # MovieLens movieId
+print(item.imdb_id, item.imdb_tconst, item.tmdb_id)
+print(mapping.stats, mapping.unmatched_imdb_ids[:5])
+```
+
+`imdb_id` preserves the numeric text in `links.csv`, including leading zeros;
+`imdb_tconst` adds `tt` and pads to at least seven digits without truncation.
+TMDb IDs are positive integers. Each record exposes MovieLens row provenance
+and, where a unique consistent match exists, IMDb/TMDb metadata row provenance.
+`sources` binds the four input paths to SHA-256, size and mtime; before/after
+fingerprints must agree. IMDb metadata lookup retains only targeted title IDs;
+TMDb JSONL retains only IDs and source locations, not payloads.
+
+Missing IDs remain `None`. A missing external record is listed under
+`unmatched_imdb_ids` or `unmatched_tmdb_ids`. Reused external IDs, duplicate
+metadata IDs and contradictory TMDb envelope/provider IDs appear in `issues`
+and `stats`. Their metadata source is withheld and the affected record's
+`*_conflict` flag is true. No arbitrary winner is selected. Coverage rates
+always use the MovieLens movie count as denominator; metadata counts exclude
+ambiguous joins. Existing external snapshots do not prove historical
+availability at a rating timestamp and must not enter strict temporal features
+without later evidence and policy approval.
