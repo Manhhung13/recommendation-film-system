@@ -5,3 +5,9 @@ decisions:
     approved_by: repository owner
     source: Explicit owner instruction in Codex on 2026-10-31, SIMPLIFY SDLC AND RESUME DEVELOPMENT.
     scope: Development SDLC only; no open product decision D-01 through D-10 is approved by this change.
+  D-CLEAN-2026-11-01:
+    status: APPROVED
+    approved_by: repository owner
+    source: Explicit owner instruction in Codex on 2026-11-01, MovieRec Data Quality Policy.
+    scope: Preserve raw data and valid MovieLens rows; quarantine ambiguous external
+      metadata; measure impact and coverage. Does not approve D-08 or model use.

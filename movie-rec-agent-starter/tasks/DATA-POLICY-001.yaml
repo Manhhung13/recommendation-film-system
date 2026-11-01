@@ -1,0 +1,51 @@
+id: DATA-POLICY-001
+title: Non-destructive movie metadata quarantine and impact policy
+type: data
+source_slides: [6]
+status: PLANNED
+dependencies: [DATA-002]
+description: Owner-approved policy checkpoint before DATA-006. Preserve validated
+  MovieLens movies and ratings; quarantine ambiguous external metadata without
+  silently deleting raw rows or inventing identity matches. DATA-QUALITY-001
+  later verifies the complete source manifest after DATA-006.
+allowed_paths:
+- src/recommender/data/
+- tests/data/
+- tests/harness/test_setup_001.py
+- docs/research/CLEANING_POLICY.md
+- movie-rec-agent-starter/tasks/index.yaml
+- movie-rec-agent-starter/tasks/DATA-POLICY-001.yaml
+- movie-rec-agent-starter/tasks/DATA-006.yaml
+- movie-rec-agent-starter/tasks/DATA-QUALITY-001.yaml
+- movie-rec-agent-starter/docs/business/approved_decisions.yaml
+acceptance_criteria:
+- id: DATA-POLICY-001-AC-01
+  description: Preserve movie and rating rows; quarantine only ambiguous external
+    feature metadata, independently by source.
+  planned_test: tests/data/test_data_policy_001.py
+  test_case: test_data_policy_001_quarantine
+- id: DATA-POLICY-001-AC-02
+  description: Report unique affected movies, ratings, users, popularity bias and
+    before/after collaborative, hybrid and external-metadata coverage.
+  planned_test: tests/data/test_data_policy_001.py
+  test_case: test_data_policy_001_impact
+- id: DATA-POLICY-001-AC-03
+  description: Require version-bound source fingerprints and documented evidence
+    for any proposed invalid-row exclusion; never mutate raw data.
+  planned_test: tests/data/test_data_policy_001.py
+  test_case: test_data_policy_001_evidence
+required_checks: [unit_tests, integration_tests, data_validation, schema_validation,
+  id_mapping_checks, provenance]
+test_suites:
+- tests/harness/test_setup_001.py
+blocked_on_decision: [D-CLEAN-2026-11-01]
+policy_notes:
+- Owner policy is limited to cleaning and audit; it does not approve D-08 source
+  rights, acquisition, temporal availability or model use.
+- DATA-006 depends on this checkpoint; DATA-QUALITY-001 retains all existing
+  dependencies and validates its output later.
+git:
+  branch_rule: feature/<feature-name>
+  commit_prefix: '[DATA-POLICY-001]'
+  push_after_tests: true
+  done_after_tests_commit_push_remote_sha: true

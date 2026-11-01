@@ -14,6 +14,7 @@ dependencies:
 - DATA-004
 - DATA-005
 - DATA-006
+- DATA-POLICY-001
 description: Planning registration only. Validate full data semantics and provenance
   before research; file presence or a crawl summary is insufficient.
 allowed_paths:
@@ -30,14 +31,16 @@ acceptance_criteria:
   test_case: test_data_quality_001_source_integrity
 - id: DATA-QUALITY-001-AC-02
   description: Validate UTC rating/tag/fetch timestamps, relevance/rating ranges,
-    releases, missing metadata, source drift and explicit coverage denominators without
-    modifying raw files.
+    releases, missing metadata, source drift, quarantine impact, popularity bias,
+    and model-ready coverage before/after feature filtering with explicit denominators,
+    without modifying raw files.
   planned_test: tests/data/test_data_quality_001.py
   test_case: test_data_quality_001_temporal_and_missing_data
 - id: DATA-QUALITY-001-AC-03
   description: Reject untrusted, stale or mismatched tests/commit/push/manifest evidence;
     distinguish permanent exclusions from successful TMDb payloads and approved missing-source
-    policy.
+    policy. Reject undocumented full-row exclusions; carry DATA-POLICY-001 rules and
+    source-bound quarantine into the hashed manifest.
   planned_test: tests/data/test_data_quality_001.py
   test_case: test_data_quality_001_evidence
 required_checks:

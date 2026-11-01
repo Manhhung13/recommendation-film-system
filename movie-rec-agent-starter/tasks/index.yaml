@@ -34,6 +34,11 @@ tasks:
   slides:
   - 6
   type: data
+- id: DATA-POLICY-001
+  file: DATA-POLICY-001.yaml
+  dependencies: [DATA-002]
+  slides: [6]
+  type: data
 - id: DATA-003
   file: DATA-003.yaml
   dependencies:
@@ -67,6 +72,7 @@ tasks:
   - DATA-003
   - DATA-004
   - DATA-005
+  - DATA-POLICY-001
   slides:
   - 6
   type: data
@@ -82,7 +88,7 @@ tasks:
   type: ml
 - id: DATA-QUALITY-001
   file: DATA-QUALITY-001.yaml
-  dependencies: [DATA-001, DATA-002, DATA-003, DATA-004, DATA-005, DATA-006]
+  dependencies: [DATA-001, DATA-002, DATA-003, DATA-004, DATA-005, DATA-006, DATA-POLICY-001]
   slides: [3, 4, 6, 11]
   type: data
 - id: RESEARCH-001

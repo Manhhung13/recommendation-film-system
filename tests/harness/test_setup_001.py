@@ -15,7 +15,9 @@ def test_setup_001_ac_01():
     tasks=agentctl.load_tasks()
     assert agentctl.validate_tasks(tasks)==[]
     assert tasks['SETUP-001']['dependencies']==['SDLC-INTEGRATION-001']
-    assert set(tasks['DATA-QUALITY-001']['dependencies'])=={f'DATA-{i:03}' for i in range(1,7)}
+    assert set(tasks['DATA-QUALITY-001']['dependencies'])=={f'DATA-{i:03}' for i in range(1,7)}|{'DATA-POLICY-001'}
+    assert set(tasks['DATA-006']['dependencies'])=={'DATA-003','DATA-004','DATA-005','DATA-POLICY-001'}
+    assert tasks['DATA-POLICY-001']['dependencies']==['DATA-002']
     assert tasks['RESEARCH-001']['dependencies']==['DATA-QUALITY-001']
     assert tasks['EDA-001']['dependencies']==['RESEARCH-001']
     assert set(tasks['SPLIT-001']['dependencies'])=={'DATA-006','EDA-001'}
@@ -54,7 +56,7 @@ def test_setup_001_ac_03():
     cli=ROOT/'movie-rec-agent-starter/scripts/agentctl.py'
     validation=subprocess.run([sys.executable,'-B',str(cli),'validate'],cwd=ROOT,capture_output=True,text=True)
     assert validation.returncode==0,validation.stderr
-    assert '28 task contracts valid' in validation.stdout
+    assert '29 task contracts valid' in validation.stdout
     help_result=subprocess.run([sys.executable,'-B',str(cli),'--help'],cwd=ROOT,capture_output=True,text=True)
     assert help_result.returncode==0
     for command in ('start','run-local','complete','verify'):assert command in help_result.stdout

@@ -8,6 +8,7 @@ dependencies:
 - DATA-003
 - DATA-004
 - DATA-005
+- DATA-POLICY-001
 description: Task contract for Codex. Implement only when dependencies are DONE and
   business decisions approved.
 allowed_paths:
@@ -20,7 +21,9 @@ acceptance_criteria:
   planned_test: tests/data/test_data_006.py
   test_case: test_data_006_ac_01
 - id: DATA-006-AC-02
-  description: All joins preserve valid movie IDs and missingness
+  description: All joins preserve valid movie IDs and ratings; apply DATA-POLICY-001
+    per-source quarantine masks only to ambiguous external metadata, with explicit
+    missingness and no automatic row deletion.
   planned_test: tests/data/test_data_006.py
   test_case: test_data_006_ac_02
 - id: DATA-006-AC-03
