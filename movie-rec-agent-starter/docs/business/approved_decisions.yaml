@@ -11,3 +11,70 @@ decisions:
     source: Explicit owner instruction in Codex on 2026-11-01, MovieRec Data Quality Policy.
     scope: Preserve raw data and valid MovieLens rows; quarantine ambiguous external
       metadata; measure impact and coverage. Does not approve D-08 or model use.
+  D-08:
+    status: APPROVED
+    approved_by: repository owner
+    source: Explicit owner instruction in Codex on 2026-11-02, MovieRec limited local research approval.
+    scope: Existing local MovieLens 25M, official IMDb dataset files and previously
+      collected TMDb data for private, non-commercial research and data engineering only.
+    conditions:
+    - No re-download, new API calls, raw-data mutation, dataset redistribution or
+      publication of a replacement movie database.
+    - Record source, provenance, version and SHA-256 for each local input; compare
+      hashes before and after processing. Retain applicable source terms and attribution.
+    - This approval does not grant commercial use, public deployment or unrestricted
+      model-training rights. Temporal availability and leakage remain separate gates.
+    - Flag any file whose acquisition origin or permitted use cannot be verified;
+      resolve the flag before using that file in downstream enrichment.
+    fingerprinted_on: "2026-11-02"
+    sources:
+      movielens_25m:
+        root: dataset_linkage_work/raw/movielens/ml-25m/
+        version: ml-25m; generated 2019-11-21 per local README.txt
+        provenance: Local README identifies GroupLens MovieLens 25M; original
+          download receipt is not retained here and must be flagged if needed.
+        license_reference: https://files.grouplens.org/datasets/movielens/ml-25m-README.html
+        restrictions: Private research only; no redistribution without permission,
+          no commercial or revenue-bearing use without GroupLens permission, no
+          implied endorsement; acknowledge GroupLens in any permitted publication.
+        sha256:
+          README.txt: 3c3b3195c5bcff4950d0f4d7a127cf1b5a4e0dd5598e2641f58a743a79fdace1
+          movies.csv: c50dea6973e619f9bc1decd4afa3e35358b83a5fb663dac0ec82252a011d023d
+          links.csv: dd07bbd9aa8e76d263d8323ddd18ec87b6e00a79a68a5896afe9a737af22322b
+          ratings.csv: 9c85525758597dca76e8d98cebb9c13e018c2317b09a0878b6d383179526e385
+          tags.csv: 84793c391a8e2a8b93190b5e780f781563a184c413d02ff2104cc2f442e2830a
+          genome-tags.csv: c84bf1e2addbf38432426a2bb2a117a59d76c0873fc875fe8764e92842fd3bfb
+          genome-scores.csv: dcee649a8ba5c02b14b5ac5ff34dd27edcf58beff1d902cdf9c114927d1f8f70
+      imdb_official_datasets:
+        root: dataset_linkage_work/raw/imdb/
+        version: Daily IMDb dataset export; exact export dates not evidenced by
+          local file timestamps. The hashes identify these local copies.
+        provenance: Owner identifies the files as official IMDb datasets; original
+          download receipts are absent. Flag origin for verification before use.
+        license_reference: https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX
+        restrictions: Personal, non-commercial use of released dataset files only;
+          no website scraping, resale, republication or replacement movie database.
+          Follow IMDb's required source acknowledgement and file-specific terms.
+        sha256:
+          title.basics.tsv.gz: a651030038a352ba561b3d625f1d41eeafaa2b4f62d86260bf95163bce33675f
+          title.crew.tsv.gz: baac8386081d10a1c3b3dc9206ed172f608721d8525b279018499256b5caeca1
+          title.principals.tsv.gz: f6e74f145c2e8fadfa6bd7d3c450ecac2cfd6035a37c6b6d3b2a8f0301b7c45a
+          name.basics.tsv.gz: 28b568fe1a88f73ffa59ad48652f2b6ce736fb57da805ff3a219d7d30737f4d8
+      tmdb_prior_snapshot:
+        root: dataset_linkage_work/raw/tmdb/
+        version: Previously collected local snapshot; crawl report generated 2026-10-25.
+          This is a crawl timestamp, not a TMDb dataset version.
+        provenance: Local crawl report and checkpoint exist; individual API-account
+          permissions and full acquisition lineage are not independently verified.
+          Flag origin and permitted use for verification before use.
+        license_reference: https://developer.themoviedb.org/docs/faq
+        restrictions: Non-commercial API data use requires TMDb attribution;
+          follow its logo and notice requirements if displayed in an application.
+          No new API calls, redistribution, commercial use or public deployment
+          is approved by this decision.
+        sha256:
+          movie_details.jsonl: c25475b00ba88c9e03f21deab616e9e3c8019da4a2a0b7bdc90db7b30b1d7c57
+          credits.jsonl: d43df79dd1b5ba1df3d2e7f5d1e6dfcd0cc4bce4edefcbc1c29558c13c773e5c
+          keywords.jsonl: 7e551be62b3df94d19762cbeba347bfa270a51d54fcfc0173d67ffbf771196b2
+          tmdb_crawl_report.json: c2ee22db714ef33b27a48eebbb3e20560fe9c8073852bf5afac6921db5d2f6a1
+          checkpoint.json: 8b7df89135b6d496c5770df529faa676a9ac8f88747381cfa8735c33e1fa8f46
