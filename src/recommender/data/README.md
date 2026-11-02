@@ -54,6 +54,25 @@ local-source case reuses the existing header checker and verifies real raw hashe
 CI skips this case when data is absent and never downloads datasets. Full real-data
 audit evidence is ignored under `.runtime/evidence/DATA-001/`.
 
+## DATA-003: Tag Genome
+
+`load_tag_genome()` reads the local `ml-25m` `genome-tags.csv` and
+`genome-scores.csv` with the DATA-001 CSV parser and aligns scores to
+`movies.csv` by MovieLens `movieId`. The stable vocabulary is the sorted
+`tagId` tuple; never align by tag text or a position from a different source
+version. Each vector stores packed doubles instead of Python float objects.
+Missing movie vectors are listed in `missing_movie_ids`; their relevance is
+`None`. Incomplete vectors fail by default; `strict_complete=False` permits an
+audit result that lists them and returns `None` for omitted scores. Duplicate
+keys, bad values, unknown IDs and malformed CSV fail with source locations.
+
+`source_version`, per-file SHA-256/size/mtime in `sources`, vocabulary row
+locations and per-movie first/last score rows bind the mapping to its raw
+snapshot. This is a read-only ingestion result, not an approval for temporal
+feature use. The genome may have been computed from ratings/tags/reviews after
+a target interaction; later split and feature tasks must establish leakage-safe
+availability before training or evaluation.
+
 ## DATA-002: ID mapping
 
 `build_movie_id_mapping()` reads `movies.csv` and `links.csv` with DATA-001's

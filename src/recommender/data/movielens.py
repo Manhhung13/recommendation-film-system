@@ -149,9 +149,10 @@ class MovieLens:
     def __init__(self, root: str | Path = DEFAULT_ROOT):
         self.root = Path(root).resolve()
 
-    def _rows(self, table: str) -> Iterator[tuple[list[str], SourceRow]]:
+    def _rows(self, table: str, *, expected: tuple[str, ...] | None = None
+              ) -> Iterator[tuple[list[str], SourceRow]]:
         path = self.root / table
-        expected = SCHEMAS[table]
+        expected = SCHEMAS[table] if expected is None else expected
         source = SourceRow(str(path), 1, 1, 1)
         try:
             with path.open("r", encoding="utf-8-sig", newline="") as handle:
