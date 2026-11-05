@@ -13,6 +13,10 @@ from .tmdb_metadata import (
     NamedFacet, PersonCredit, SourceUseEvidence, TmdbEnrichment, TmdbMovie,
     load_tmdb_metadata,
 )
+from .imdb_metadata import (
+    ImdbEnrichment, ImdbMovie, ImdbPerson, ImdbSourceUseEvidence,
+    load_imdb_metadata,
+)
 
 __all__ = [
     "DataValidationError", "Link", "Movie", "MovieLens", "Rating", "SourceRow",
@@ -22,4 +26,6 @@ __all__ = [
     "GenomeMovie", "TagGenome", "load_tag_genome",
     "NamedFacet", "PersonCredit", "SourceUseEvidence", "TmdbEnrichment",
     "TmdbMovie", "load_tmdb_metadata",
+    "ImdbEnrichment", "ImdbMovie", "ImdbPerson", "ImdbSourceUseEvidence",
+    "load_imdb_metadata",
 ]

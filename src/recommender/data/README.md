@@ -156,3 +156,36 @@ values before and after enrichment. It retained 62,423 MovieLens movie IDs;
 TMDb JSONL file had 61,427 rows with 162 unmatched to an unambiguous mapping.
 Overview was present for 61,165 movies and release date for 61,247. The
 validation test prints only aggregate coverage and never opens ratings.
+
+## DATA-005: IMDb metadata
+
+`load_imdb_metadata(mapping, imdb_dir, source_use=...)` streams the four
+existing IMDb TSV.GZ files, selecting only the `tt` movie and `nm` person IDs
+reachable through the DATA-002 `links.csv` mapping. It retains runtime, start
+year, genre labels, director and writer IDs, and ordered actor/actress IDs
+with available names. Missing IMDb `\N` values become `None`; missing cast
+does not remove the MovieLens movie or any rating. Duplicate or conflicting
+IDs quarantine the affected IMDb metadata using the DATA-POLICY-001 mask.
+The result records source rows, four pre/post SHA-256 fingerprints, an explicit
+source-use assertion, coverage, and a temporal-availability warning.
+
+`acquire_all_data.py` names IMDb's official downloadable dataset endpoint and
+the four filenames. That code and matching D-08 hashes identify the intended
+method and current copies, but cannot prove the exact download run or export
+date. On 2026-11-05 the owner attested in the DATA-004 conversation that this
+hash-matched `title.basics.tsv.gz` came from IMDb's official downloadable
+datasets and is permitted for D-08's private, non-commercial research. In the
+DATA-005 conversation the owner likewise attested to the hash-matched
+`title.crew.tsv.gz`, `title.principals.tsv.gz`, and `name.basics.tsv.gz`.
+Original download receipts and exact export dates remain unavailable. The
+IMDb acknowledgement, no redistribution, no replacement database, and no
+public or commercial deployment restrictions in D-08 remain in force.
+
+The opt-in read-only validation on 2026-11-05 pinned the four IMDb files,
+MovieLens `movies.csv`/`links.csv`, and the DATA-002 TMDb details input to
+their D-08 hashes before and after processing. It retained 62,423 MovieLens
+movie IDs; 62,294 had eligible IMDb metadata (99.79%), with no ambiguous
+IMDb metadata quarantined in this snapshot. Runtime was available for 62,140,
+release year for 62,289, directors for 62,138, writers for 59,063, and actors
+for 57,151. The 5,143 eligible movies without actor/actress credits remain
+present and explicitly report missing cast. Ratings were never opened.
