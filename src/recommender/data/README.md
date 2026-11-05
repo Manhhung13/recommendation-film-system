@@ -108,3 +108,51 @@ always use the MovieLens movie count as denominator; metadata counts exclude
 ambiguous joins. Existing external snapshots do not prove historical
 availability at a rating timestamp and must not enter strict temporal features
 without later evidence and policy approval.
+
+## DATA-004: TMDb metadata
+
+`load_tmdb_metadata(mapping, tmdb_dir, source_use=...)` streams the existing
+movie details, keywords and credits JSONL files. It retains normalized
+overview, genres, release date, keywords, cast, crew, source IDs and source row
+locations for MovieLens movies. It does not open ratings or contact TMDb.
+Source hashes must match explicit `SourceUseEvidence` and the details hash in
+the DATA-002 movie mapping before any payload is read; the files are hashed
+again after parsing. Missing fields remain `None`. Duplicate or contradictory
+TMDb rows withhold the affected movie's TMDb fields under the
+`movie-metadata-quarantine-v1` mask, while the MovieLens movie remains present.
+
+`SourceUseEvidence` records a documented origin, permitted-use basis,
+version and expected hashes. Supplying an object is an audit assertion, not
+proof of an API account or license. D-08's unresolved real-snapshot flags must
+be resolved before constructing real-data evidence or calling this loader on
+the local snapshot. Synthetic fixtures use `synthetic_fixture=True`; that flag
+cannot authorize the repository's raw TMDb directory. Returned fetch times
+and source fingerprints preserve provenance, but fetched metadata must not be
+used as historical features until a separate temporal leakage review.
+
+The documented acquisition path in `acquire_all_data.py` selects TMDb IDs
+from MovieLens `links.csv`, requests each movie with appended keywords and
+credits using an environment-provided credential, and writes three JSONL
+envelopes with MovieLens IDs and a fetch time. The existing checkpoint and
+crawl report both describe a full run ending 2026-10-25: 62,281 target IDs,
+61,427 successes, 854 permanent failures and no pending IDs. Those records
+and the D-08 SHA-256 values identify the current local snapshot; they do not
+independently prove which account made the requests, which terms it accepted,
+or that every row was produced by that script. On 2026-11-05 the owner
+factually attested in the DATA-004 Codex conversation that this hash-matched
+snapshot came through the documented crawl from an authorized TMDb API account,
+without later replacement or mixing, and that the applicable account terms
+were accepted and permit D-08 private, non-commercial research processing.
+The owner also attested that the hash-matched `title.basics.tsv.gz` was obtained
+from IMDb's official downloadable datasets and is permitted for that scope.
+These attestations resolve the flagged inputs for this limited local validation;
+original download receipts, account records and per-row acquisition proof are
+still absent. D-08 restrictions and temporal leakage gates remain in force.
+
+The opt-in read-only validation on 2026-11-05 pinned `movies.csv`, `links.csv`,
+`title.basics.tsv.gz` and all three TMDb JSONL files to their D-08 SHA-256
+values before and after enrichment. It retained 62,423 MovieLens movie IDs;
+61,262 had eligible TMDb metadata (98.14%), 201 were quarantined, and each
+TMDb JSONL file had 61,427 rows with 162 unmatched to an unambiguous mapping.
+Overview was present for 61,165 movies and release date for 61,247. The
+validation test prints only aggregate coverage and never opens ratings.
