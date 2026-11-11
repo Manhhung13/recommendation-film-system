@@ -1,35 +1,32 @@
-"""DATA-006: Build versioned Movie Feature Store.
+"""DATA-006: Versioned, read-only Movie Feature Store integration.
 
-Combines MovieLens raw data with enriched TMDb and IMDb metadata into
-versioned feature records. Preserves source provenance, quarantine masks
-and coverage per DATA-POLICY-001. Never mutates raw datasets.
-
-Schema fields (slide 6):
-  movie_id, title, genres, tmdb_id, imdb_id, tag_genome, overview,
-  keywords, cast, director, runtime, year, source_provenance
+Join only by MovieLens movieId and links.csv identities. Keep MovieLens rows,
+quarantine ambiguous external metadata, and record reproducible source fingerprints.
+No raw data or external service is modified or fetched.
 """
-
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Tuple
+from typing import Mapping
 
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-
-from .id_mapping import MovieIdRecord, SourceRow, _fingerprint, build_movie_id_mapping
-from .movielens import MovieLens, DataValidationError, source_snapshot
-from .tag_genome import load_tag_genome as _load_genome, GenomeMovie
-from .imdb_metadata import load_imdb_metadata
-from .tmdb_metadata import load_tmdb_metadata, TmdbEnrichment
 from .cleaning import RULES_VERSION, feature_eligibility
+from .id_mapping import (
+    DEFAULT_IMDB,
+    DEFAULT_TMDB,
+    MovieIdMapping,
+    build_movie_id_mapping,
+)
+from .imdb_metadata import ImdbSourceUseEvidence, load_imdb_metadata
+from .movielens import DataValidationError, MovieLens, SourceRow, source_snapshot
+from .tag_genome import GenomeMovie, load_tag_genome
+from .tmdb_metadata import SourceUseEvidence, load_tmdb_metadata
+
+SCHEMA_VERSION = "movie-feature-store-v1"
 
 
 @dataclass(frozen=True, slots=True)
 class MovieFeatureRecord:
-    """Versioned movie feature record matching slide 6 schema."""
     movie_id: int
     title: str
     genres: tuple[str, ...]
@@ -43,205 +40,212 @@ class MovieFeatureRecord:
     runtime_minutes: int | None = None
     release_year: int | None = None
     source_provenance: Mapping[str, object] | None = None
-
-    # D-08 policy fields
     imdb_allowed: bool = True
     tmdb_allowed: bool = True
     quarantine_mask: tuple[str, ...] | None = None
 
-    def validate(self) -> Tuple[bool, list[str]]:
-        """Validate against DATA-006 schema and policy requirements."""
-        errors = []
+    def validate(self) -> tuple[bool, list[str]]:
+        return validate_feature_record(self)
 
-        if not isinstance(self.movie_id, int) or self.movie_id < 0:
-            errors.append("movie_id must be a non-negative integer")
 
-        if not isinstance(self.title, str) or not self.title.strip():
-            errors.append("title must be a non-empty string")
+def validate_feature_record(record: MovieFeatureRecord) -> tuple[bool, list[str]]:
+    """Basic schema guard; source-level checks belong to DATA-QUALITY-001."""
+    errors = []
+    if type(record.movie_id) is not int or record.movie_id <= 0:
+        errors.append("movie_id must be a positive integer")
+    if not isinstance(record.title, str) or not record.title.strip():
+        errors.append("title must be a non-empty string")
+    if not isinstance(record.genres, tuple) or not all(
+        isinstance(g, str) and g.strip() for g in record.genres
+    ):
+        errors.append("genres must be a tuple of non-empty strings")
+    if not isinstance(record.source_provenance, Mapping) or not record.source_provenance:
+        errors.append("source_provenance is required")
+    return not errors, errors
 
-        if not isinstance(self.genres, tuple) or not all(
-            isinstance(g, str) and g.strip() for g in self.genres
-        ):
-            errors.append("genres must be a tuple of non-empty strings")
 
-        if self.source_provenance is None:
-            errors.append("source_provenance is required")
-
-        return len(errors) == 0, errors
+def _names(items: object) -> tuple[str, ...] | None:
+    """Convert TMDb NamedFacet/PersonCredit tuples to strings without fake values."""
+    if items is None:
+        return None
+    return tuple(item.name for item in items if item.name)
 
 
 def build_movie_feature_store(
-    movielens_root: Path,
+    movielens_root: str | Path,
     imdb_dir: str | Path | None = None,
     tmdb_dir: str | Path | None = None,
     *,
-    source_use_imdb: object | None = None,
-    source_use_tmdb: object | None = None,
-    tag_genome_path: Path | None = None,
-) -> Tuple[
-    dict[int, MovieFeatureRecord],
-    dict[str, object],
-    Tuple[tuple[str, SourceRow, int], ...],
-]:
-    """Build a versioned Movie Feature Store from the three data sources.
+    source_use_imdb: ImdbSourceUseEvidence | None = None,
+    source_use_tmdb: SourceUseEvidence | None = None,
+    tag_genome_path: str | Path | None = None,
+) -> tuple[dict[int, MovieFeatureRecord], dict[str, object],
+           tuple[tuple[str, SourceRow, int], ...]]:
+    """Return (movie records, source provenance, issues), without altering raw data.
 
-    Returns:
-        (records, provenance_snapshot, quarantine_issues)
-
-    Policy (D-08 + DATA-POLICY-001):
-    - Only reads local snapshots never makes API calls or re-downloads
-    - SHA-256 fingerprints recorded before/after processing
-    - Ambiguous external metadata quarantined per mask; rows preserved
-    - No automatic row deletion; missing fields become None
-    - Tag genome scores version-bound to raw CSVs
-    - source_use evidence required for IMDb/TMDb; synthetic fixture
-      cannot authorize local raw data
+    IMDb and TMDb enrichment requires corresponding version-bound source-use
+    evidence validated by the DATA-004/005 loaders. The mapping still validates
+    the local external identity snapshots when enrichment is disabled.
     """
-    from .id_mapping import MovieIdRecord
-    from .tag_genome import load_tag_genome as _load_genome
+    ml_root = Path(movielens_root).resolve()
+    imdb_path = Path(imdb_dir) / "title.basics.tsv.gz" if imdb_dir is not None else DEFAULT_IMDB
+    tmdb_path = Path(tmdb_dir) / "movie_details.jsonl" if tmdb_dir is not None else DEFAULT_TMDB
 
-    ml_root = movielens_root.resolve()
-
-    # Step 1: Build the unified movie ID mapping (links.csv bridges all sources)
-    mapping: dict[int, MovieIdRecord] = build_movie_id_mapping(ml_root)
-
-    # Step 2: Record raw snapshot before enrichment
-    provenance = source_snapshot(
-        ml_root / "movies.csv",
-        ml_root / "links.csv",
-        ml_root / "ratings.csv",
-        ml_root / "tags.csv" if (ml_root / "tags.csv").exists() else None,
+    # Snapshot the four MovieLens raw tables (including ratings and tags).
+    before = source_snapshot(ml_root)
+    mapping: MovieIdMapping = build_movie_id_mapping(
+        ml_root, imdb_path=imdb_path, tmdb_path=tmdb_path,
     )
+    movies = {movie.movie_id: movie for movie in MovieLens(ml_root).movies()}
+    if movies.keys() != mapping.records.keys():
+        raise ValueError("Feature store/movie ID mapping mismatch")
 
-    # Step 3: Enrich with IMDb metadata (behind D-08 gate)
-    imdb_enrichment = None
-    if imdb_dir is not None:
-        imdb_enrichment = load_imdb_metadata(
-            mapping, str(imdb_dir), source_use=source_use_imdb
-        )
-
-    # Step 4: Enrich with TMDb metadata (behind D-08 gate)
-    tmdb_enrichment = None
-    if tmdb_dir is not None:
-        tmdb_enrichment = load_tmdb_metadata(
-            mapping, str(tmdb_dir), source_use=source_use_tmdb
-        )
-
-    # Step 5: Load tag genome if available
+    imdb = (load_imdb_metadata(mapping, imdb_dir, source_use=source_use_imdb)
+            if imdb_dir is not None else None)
+    tmdb = (load_tmdb_metadata(mapping, tmdb_dir, source_use=source_use_tmdb)
+            if tmdb_dir is not None else None)
     genome = None
-    if tag_genome_path is not None and tag_genome_path.exists():
-        genome = _load_genome(tag_genome_path)
+    if tag_genome_path is not None:
+        genome_root = Path(tag_genome_path).resolve()
+        if genome_root.is_file():
+            genome_root = genome_root.parent
+        if not genome_root.is_dir():
+            raise FileNotFoundError(f"Missing Tag Genome directory: {genome_root}")
+        genome = load_tag_genome(genome_root)
+        if genome.movie_ids != movies.keys():
+            raise ValueError("Tag Genome movie ID coverage does not match MovieLens")
 
-    # Step 6: Build feature records per movie
+    issues: list[tuple[str, SourceRow, int]] = [
+        (issue.code, issue.source, movie_id)
+        for issue in mapping.issues for movie_id in issue.movie_ids
+    ]
+    if imdb is not None:
+        issues.extend(imdb.issues)
+    if tmdb is not None:
+        issues.extend(tmdb.issues)
+
+    after = source_snapshot(ml_root)
+    if before != after:
+        raise DataValidationError(
+            "source_changed", SourceRow(str(ml_root), 0, 0, 0), "file"
+        )
+
+    provenance: dict[str, object] = {
+        "schema_version": SCHEMA_VERSION,
+        "quarantine_policy_version": RULES_VERSION,
+        "movielens_sources": after,
+        "mapping_sources": {k: dict(v) for k, v in mapping.sources.items()},
+        "imdb_sources": {k: dict(v) for k, v in imdb.sources.items()} if imdb else None,
+        "tmdb_sources": {k: dict(v) for k, v in tmdb.sources.items()} if tmdb else None,
+        "tag_genome_sources": {k: dict(v) for k, v in genome.sources.items()} if genome else None,
+        "tag_genome_version": genome.source_version if genome else None,
+    }
+
     records: dict[int, MovieFeatureRecord] = {}
+    for movie_id, mapping_row in mapping.records.items():
+        movie = movies[movie_id]
+        eligibility = feature_eligibility(mapping_row)
+        imdb_row = imdb.records.get(movie_id) if imdb is not None else None
+        tmdb_row = tmdb.records.get(movie_id) if tmdb is not None else None
 
-    for movie_id, record in mapping.items():
-        # Start with MovieLens base
-        title = record.movie_source.title if hasattr(record.movie_source, "title") else str(movie_id)
-        genres = record.movie_source.genres or () if hasattr(record.movie_source, "genres") else ()
+        # Availability and ambiguity are distinct: only ambiguity is quarantined.
+        imdb_ambiguous = mapping_row.imdb_conflict or bool(
+            imdb_row is not None and any(
+                reason in {"imdb_mapping_ambiguous", "duplicate_imdb_name"}
+                for reason in imdb_row.reasons
+            )
+        )
+        tmdb_ambiguous = mapping_row.tmdb_conflict or bool(
+            tmdb_row is not None and any(
+                reason in {"tmdb_mapping_ambiguous", "tmdb_fetch_time_conflict"}
+                for reason in tmdb_row.reasons
+            )
+        )
+        imdb_ready = bool(
+            eligibility.imdb_allowed and imdb_row is not None
+            and imdb_row.imdb_allowed and not imdb_ambiguous
+        )
+        tmdb_ready = bool(
+            eligibility.tmdb_allowed and tmdb_row is not None
+            and tmdb_row.tmdb_allowed and not tmdb_ambiguous
+        )
+        masks = tuple(
+            name for name, active in (
+                ("imdb_quarantined", imdb_ambiguous),
+                ("tmdb_quarantined", tmdb_ambiguous),
+            ) if active
+        )
 
-        # TMDb contributions (if available)
-        tmdb_id = None
-        overview = None
-        keywords: tuple[str, ...] | None = None
-        cast: tuple[str, ...] | None = None
-        director: str | None = None
-        runtime_minutes: int | None = None
-        release_year: int | None = None
+        title = movie.title
+        genres = movie.genres
+        tmdb_id = None if tmdb_ambiguous else mapping_row.tmdb_id
+        imdb_id = None if imdb_ambiguous else mapping_row.imdb_tconst
+        overview = keywords = cast = director = runtime = year = None
 
-        if tmdb_enrichment is not None and movie_id in tmdb_enrichment.records:
-            tmovie = tmdb_enrichment.records[movie_id]
-            tmdb_id = tmovie.tmdb_id
-            overview = tmovie.overview
-            keywords = tmovie.keywords
-            cast = tmovie.cast
-            # Extract director from crew if available
-            if tmovie.crew:
-                directors = [p.name for p in tmovie.crew if p.role == "director"]
-                director = directors[0] if directors else None
-            runtime_minutes = tmovie.runtime_minutes
-            release_year = tmovie.release_date.year if tmovie.release_date else None
+        if tmdb_ready:
+            overview = tmdb_row.overview
+            keywords = _names(tmdb_row.keywords)
+            cast = _names(tmdb_row.cast)
+            directors = tuple(
+                p.name for p in (tmdb_row.crew or ())
+                if p.name and p.role and p.role.casefold() == "director"
+            )
+            director = directors[0] if directors else None
+            year = tmdb_row.release_date.year if tmdb_row.release_date else None
 
-        # IMDb contributions (if available)
-        if imdb_enrichment is not None and movie_id in imdb_enrichment.records:
-            imovie = imdb_enrichment.records[movie_id]
-            imdb_id = imovie.imdb_id or imovie.imdb_tconst
-            # Genres from IMDb take precedence but we merge
-            if imovie.genres:
-                genres = imovie.genres
-            runtime_minutes = imovie.runtime_minutes or runtime_minutes
-            release_year = imovie.release_year
+        if imdb_ready:
+            if imdb_row.genres:
+                genres = imdb_row.genres
+            if imdb_row.runtime_minutes is not None:
+                runtime = imdb_row.runtime_minutes
+            if imdb_row.release_year is not None:
+                year = imdb_row.release_year
+            if not director:
+                names = _names(imdb_row.directors)
+                director = names[0] if names else None
+            if cast is None:
+                cast = _names(imdb_row.actors)
 
-        # Tag genome contributions (if available)
-        tag_genome_record: GenomeMovie | None = None
-        if genome is not None and movie_id in genome.movies:
-            tag_genome_record = genome.movies[movie_id]
-
-        # Determine eligibility masks per DATA-POLICY-001
-        eligibility = feature_eligibility(record)
-        imdb_allowed = eligibility.imdb_allowed
-        tmdb_allowed = eligibility.tmdb_allowed
-
-        quarantine_reasons: tuple[str, ...] = ()
-        if not imdb_allowed:
-            quarantine_reasons = quarantine_reasons + ("imdb_quarantined",)
-        if not tmdb_allowed:
-            quarantine_reasons = quarantine_reasons + ("tmdb_quarantined",)
-
-        # Build the provenance for this specific movie
-        movie_provenance = {
-            "movie_id": movie_id,
-            "source_snapshot": provenance,
-            "imdb_source_use": (
-                source_use_imdb if imdb_enrichment else None
-            ),
-            "tmdb_source_use": (
-                source_use_tmdb if tmdb_enrichment else None
-            ),
-            "tag_genome_version": genome.source_version if genome else None,
-        }
-
-        records[movie_id] = MovieFeatureRecord(
+        feature = MovieFeatureRecord(
             movie_id=movie_id,
             title=title,
             genres=genres,
             tmdb_id=tmdb_id,
             imdb_id=imdb_id,
-            tag_genome=tag_genome_record,
+            tag_genome=genome.movies.get(movie_id) if genome else None,
             overview=overview,
             keywords=keywords,
             cast=cast,
             director=director,
-            runtime_minutes=runtime_minutes,
-            release_year=release_year,
-            source_provenance=movie_provenance,
-            imdb_allowed=imdb_allowed,
-            tmdb_allowed=tmdb_allowed,
-            quarantine_mask=quarantine_reasons,
+            runtime_minutes=runtime,
+            release_year=year,
+            source_provenance={
+                "movie_id": movie_id,
+                "schema_version": SCHEMA_VERSION,
+                "sources": provenance,
+                "movie_row": {
+                    "file": movie.source.source_file,
+                    "record": movie.source.record_number,
+                    "line_start": movie.source.line_start,
+                    "line_end": movie.source.line_end,
+                },
+                "link_row": {
+                    "file": mapping_row.link_source.source_file,
+                    "record": mapping_row.link_source.record_number,
+                    "line_start": mapping_row.link_source.line_start,
+                    "line_end": mapping_row.link_source.line_end,
+                },
+                "external_missing_or_ineligible": eligibility.reasons,
+                "imdb_missing": not imdb_ready,
+                "tmdb_missing": not tmdb_ready,
+            },
+            imdb_allowed=imdb_ready,
+            tmdb_allowed=tmdb_ready,
+            quarantine_mask=masks,
         )
+        valid, errors = feature.validate()
+        if not valid:
+            raise ValueError(f"Invalid feature record for movieId={movie_id}: {errors}")
+        records[movie_id] = feature
 
-    return records, provenance, ()  # quarantine issues would be aggregated separately
-
-
-def validate_feature_record(record: MovieFeatureRecord) -> tuple[bool, list[str]]:
-    """Validate a single MovieFeatureRecord against the DATA-006 schema.
-
-    Returns (is_valid, error_messages).
-    """
-    errors = []
-
-    if not isinstance(record.movie_id, int) or record.movie_id < 0:
-        errors.append("movie_id must be a non-negative integer")
-
-    if not isinstance(record.title, str) or not record.title.strip():
-        errors.append("title must be a non-empty string")
-
-    if not isinstance(record.genres, tuple) or not all(
-        isinstance(g, str) and g.strip() for g in record.genres
-    ):
-        errors.append("genres must be a tuple of non-empty strings")
-
-    if record.source_provenance is None:
-        errors.append("source_provenance is required")
-
-    return len(errors) == 0, errors
+    return records, provenance, tuple(issues)
